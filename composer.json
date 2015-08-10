@@ -1,0 +1,27 @@
+{
+	"name": "dasred/php-phraseapp-client",
+	"homepage": "https://github.com/DasRed/php-phraseapp-client",
+
+	"prefer-stable": true,
+	"minimum-stability": "dev",
+
+	"require": {
+		"php": ">=5.5",
+		"zendframework/zend-config": "@stable",
+		"zendframework/zend-servicemanager": "@stable",
+		"dasred/zend-console": "@stable",
+		"dasred/zend-log": "@stable",
+		"dasred/translation":  "@stable"
+	},
+
+	"autoload": {
+		"psr-4": {
+			"DasRed\\PhraseApp\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"DasRedTest\\PhraseApp\\": "test/"
+		}
+	}
+}
