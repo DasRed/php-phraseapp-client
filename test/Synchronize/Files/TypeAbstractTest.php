@@ -4,23 +4,63 @@ namespace DasRedTest\PhraseApp\Synchronize\Files;
 use DasRed\PhraseApp\Synchronize\Files\TypeAbstract;
 use DasRed\PhraseApp\Synchronize\Files\Exception\InvalidPath;
 use DasRed\PhraseApp\Synchronize;
+use DasRed\PhraseApp\Synchronize\Files\Exception\FailureCreateLocalePath;
 
 /**
  * @coversDefaultClass \DasRed\PhraseApp\Synchronize\Files\TypeAbstract
  */
 class TypeAbstractTest extends \PHPUnit_Framework_TestCase
 {
+	protected $path;
+
+	public function setUp()
+	{
+		parent::setUp();
+
+		$this->path = rtrim(str_replace('\\', '/', __DIR__ . '/translations/temp-test')) . '/';
+
+		if (file_exists($this->path) === false)
+		{
+			mkdir($this->path, 0777, true);
+		}
+	}
+
+	public function tearDown()
+	{
+		parent::tearDown();
+
+		if (file_exists($this->path) === true)
+		{
+			$iterator = new \RecursiveDirectoryIterator($this->path);
+			foreach (new \RecursiveIteratorIterator($iterator, \RecursiveIteratorIterator::CHILD_FIRST) as $file)
+			{
+				if ($file->isDir() === true)
+				{
+					if (in_array($file->getBasename(), ['.', '..']) === false)
+					{
+						rmdir($file->getPathname());
+					}
+				}
+				else
+				{
+					unlink($file->getPathname());
+				}
+			}
+			rmdir($this->path);
+		}
+	}
+
 	/**
 	 * @covers ::__construct
 	 */
 	public function testConstruct()
 	{
 		$type = $this->getMockBuilder(TypeAbstract::class)->setMethods([])->setConstructorArgs([__DIR__])->getMockForAbstractClass();
-		$this->assertSame(trim(str_replace('\\', '/', __DIR__), '/') . '/', $type->getPath());
+		$this->assertSame(rtrim(str_replace('\\', '/', __DIR__), '/') . '/', $type->getPath());
 		$this->assertEquals([], $type->getExcludeNames());
 
 		$type = $this->getMockBuilder(TypeAbstract::class)->setMethods([])->setConstructorArgs([__DIR__, ['A']])->getMockForAbstractClass();
-		$this->assertSame(trim(str_replace('\\', '/', __DIR__), '/') . '/', $type->getPath());
+		$this->assertSame(rtrim(str_replace('\\', '/', __DIR__), '/') . '/', $type->getPath());
 		$this->assertEquals(['A'], $type->getExcludeNames());
 	}
 
@@ -38,10 +78,26 @@ class TypeAbstractTest extends \PHPUnit_Framework_TestCase
 				['file' => $path . 'de-DE/other.php', 'locale' => 'de-DE', 'name' => 'other'],
 				['file' => $path . 'de-DE/test.php', 'locale' => 'de-DE', 'name' => 'test'],
 			]],
+
 			['php', ['test/a/nuff/module'], '/^([a-zA-Z_0-9]+)\.php$/', $path, [
 				['file' => $path . 'de-DE/other.php', 'locale' => 'de-DE', 'name' => 'other'],
 				['file' => $path . 'de-DE/test.php', 'locale' => 'de-DE', 'name' => 'test'],
 			]],
+
+			['php', ['es'], '/^([a-zA-Z_0-9]+)\.php$/', $path, [
+				['file' => $path . 'de-DE/other.php', 'locale' => 'de-DE', 'name' => 'other'],
+			]],
+
+			['php', ['(a/nu)|(es)'], '/^([a-zA-Z_0-9]+)\.php$/', $path, [
+				['file' => $path . 'de-DE/other.php', 'locale' => 'de-DE', 'name' => 'other'],
+			]],
+
+			['php', ['^test/'], '/^([a-zA-Z_0-9]+)\.php$/', $path, [
+				['file' => $path . 'de-DE/other.php', 'locale' => 'de-DE', 'name' => 'other'],
+				['file' => $path . 'de-DE/test.php', 'locale' => 'de-DE', 'name' => 'test'],
+			]],
+
+			['php', ['(er|st|ule)$'], '/^([a-zA-Z_0-9]+)\.php$/', $path, []],
 		];
 	}
 
@@ -113,9 +169,9 @@ class TypeAbstractTest extends \PHPUnit_Framework_TestCase
 		$reflectionMethod = new \ReflectionMethod($type, 'setPath');
 		$reflectionMethod->setAccessible(true);
 
-		$this->assertSame(trim(str_replace('\\', '/', __DIR__), '/') . '/', $type->getPath());
+		$this->assertSame(rtrim(str_replace('\\', '/', __DIR__), '/') . '/', $type->getPath());
 		$this->assertSame($type, $reflectionMethod->invoke($type, __DIR__ . '/translations'));
-		$this->assertSame(trim(str_replace('\\', '/', __DIR__ . '/translations'), '/') . '/', $type->getPath());
+		$this->assertSame(rtrim(str_replace('\\', '/', __DIR__ . '/translations'), '/') . '/', $type->getPath());
 	}
 
 	/**
@@ -165,23 +221,20 @@ class TypeAbstractTest extends \PHPUnit_Framework_TestCase
 		];
 
 		$synchronize = $this->getMockBuilder(Synchronize::class)->setMethods(['addTranslations'])->disableOriginalConstructor()->getMock();
-		$synchronize->expects($this->exactly(2))->method('addTranslations')->withConsecutive([
-			'de-DE', ['narf' => 'nuff', 'rofl' => 'lol']
-		], [
-			'ru-RU', ['haha.narf' => 'nuff', 'haha.rofl' => 'lol']
-		])->willReturnSelf();
+		$synchronize->expects($this->exactly(2))->method('addTranslations')->withConsecutive(
+			['de-DE', ['narf' => 'nuff', 'rofl' => 'lol']],
+			['ru-RU', ['haha.narf' => 'nuff', 'haha.rofl' => 'lol']]
+		)->willReturnSelf();
 
 		$type = $this->getMockBuilder(TypeAbstract::class)->setMethods(['collectFiles', 'readFiles'])->setConstructorArgs([__DIR__])->getMockForAbstractClass();
 		$type->expects($this->once())->method('collectFiles')->with()->willReturn($files);
-		$type->expects($this->exactly(2))->method('readFile')->withConsecutive([
-			'nuff.php', 'nuff'
-		], [
-			'narf.php', 'narf'
-		])->willReturnOnConsecutiveCalls([
-			'rofl' => 'lol', 'narf' => 'nuff'
-		], [
-			'haha.rofl' => 'lol', 'haha.narf' => 'nuff'
-		]);
+		$type->expects($this->exactly(2))->method('readFile')->withConsecutive(
+			['nuff.php', 'nuff'],
+			['narf.php', 'narf']
+		)->willReturnOnConsecutiveCalls(
+			['rofl' => 'lol', 'narf' => 'nuff'],
+			['haha.rofl' => 'lol', 'haha.narf' => 'nuff']
+		);
 
 		$this->assertTrue($type->read($synchronize));
 	}
@@ -191,6 +244,44 @@ class TypeAbstractTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testWrite()
 	{
-		$this->markTestIncomplete();
+		$synchronize = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations'])->disableOriginalConstructor()->getMock();
+		$synchronize->expects($this->once())->method('getTranslations')->with()->willReturn([
+			'de-DE' => ['haha.narf' => 'nuff', 'haha.rofl' => 'lol', 'muh.nuff' => 'roflcopter', 'abc' => 'def'],
+			'ru-RU' => ['test/a/nuff/haha.narf' => 'nuff', 'test/a/nuff/haha.rofl' => 'lol', 'test/a/nuff/muh.nuff' => 'roflcopter'],
+		]);
+
+		$type = $this->getMockBuilder(TypeAbstract::class)->setMethods(['writeFile', 'getFileExtension'])->setConstructorArgs([$this->path])->getMockForAbstractClass();
+		$type->expects($this->any())->method('getFileExtension')->with()->willReturn('php');
+		$type->expects($this->exactly(4))->method('writeFile')->withConsecutive(
+			[$this->path . 'de-DE/haha.php', ['narf' => 'nuff', 'rofl' => 'lol']],
+			[$this->path . 'de-DE/muh.php', ['nuff' => 'roflcopter']],
+			[$this->path . 'ru-RU/test/a/nuff/haha.php', ['narf' => 'nuff', 'rofl' => 'lol']],
+			[$this->path . 'ru-RU/test/a/nuff/muh.php', ['nuff' => 'roflcopter']]
+		)->willReturnSelf();
+
+		$this->assertTrue($type->write($synchronize));
+
+		$this->assertFileExists($this->path . 'de-DE');
+		$this->assertFileExists($this->path . 'ru-RU/test/a/nuff');
+	}
+
+	/**
+	 * @covers ::write
+	 */
+	public function testWriteFailed()
+	{
+		file_put_contents($this->path . 'de-DE', ' ');
+
+		$synchronize = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations'])->disableOriginalConstructor()->getMock();
+		$synchronize->expects($this->once())->method('getTranslations')->with()->willReturn([
+			'de-DE' => ['a/b/c/haha.narf' => 'nuff'],
+		]);
+
+		$type = $this->getMockBuilder(TypeAbstract::class)->setMethods(['writeFile', 'getFileExtension'])->setConstructorArgs([$this->path])->getMockForAbstractClass();
+		$type->expects($this->any())->method('getFileExtension')->willReturn('php');
+		$type->expects($this->any())->method('writeFile')->willReturnSelf();
+
+		$this->setExpectedException(FailureCreateLocalePath::class);
+		$type->write($synchronize);
 	}
 }

@@ -20,10 +20,8 @@ class InvalidPathTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testConstruct()
 	{
-		$this->markTestIncomplete();
 		$exception = new InvalidPath('nuff/');
 
 		$this->assertEquals('The path "nuff/" is invalid.', $exception->getMessage());
 	}
-
 }

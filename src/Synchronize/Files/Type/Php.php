@@ -50,29 +50,7 @@ class Php extends TypeAbstract
 	 */
 	protected function readFile($file, $keyPrefix = '')
 	{
-		$result = require $file;
-		if (is_array($result) === true)
-		{
-			return $this->prepare($keyPrefix, $result);
-		}
-
-		$varsDeclaredAfter = get_defined_vars();
-
-		$result = [];
-		foreach ($varsDeclaredAfter as $name => $varDeclaredAfter)
-		{
-			if ($name === 'result')
-			{
-				continue;
-			}
-
-			if (is_array($varDeclaredAfter) === true)
-			{
-				$result = array_merge($result, $varDeclaredAfter);
-			}
-		}
-
-		return $this->prepare($keyPrefix, $result);
+		return $this->prepare($keyPrefix, require $file);
 	}
 
 	/**

@@ -20,10 +20,8 @@ class FailureCreateLocalePathTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testConstruct()
 	{
-		$this->markTestIncomplete();
 		$exception = new FailureCreateLocalePath('nuff/', 'lol');
 
 		$this->assertEquals('Locale path "nuff/lol" can not be created.', $exception->getMessage());
 	}
-
 }

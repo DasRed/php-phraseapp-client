@@ -19,7 +19,7 @@ abstract class TypeAbstract implements HandlerInterface
 	 *
 	 * @var string
 	 */
-	protected $path = null;
+	protected $path;
 
 	/**
 	 *
@@ -49,7 +49,7 @@ abstract class TypeAbstract implements HandlerInterface
 		$result = [];
 		foreach ($regex as $file)
 		{
-			$filePart = trim(str_replace([
+			$filePart = rtrim(str_replace([
 				'\\',
 				$this->getPath()
 			], [
@@ -60,7 +60,16 @@ abstract class TypeAbstract implements HandlerInterface
 
 			// key name
 			$name = (strpos($parts[1], '/') !== false ? dirname($parts[1]) . '/' : '') . basename($parts[1], '.' . $this->getFileExtension());
-			if (in_array($name, $this->getExcludeNames()) === true || in_array(basename($name), $this->getExcludeNames()) === true)
+			$found = false;
+			foreach ($this->getExcludeNames() as $regex)
+			{
+				if (preg_match('#' . $regex . '#i', $name) != 0)
+				{
+					$found = true;
+					break;
+				}
+			}
+			if ($found === true)
 			{
 				continue;
 			}
@@ -198,7 +207,7 @@ abstract class TypeAbstract implements HandlerInterface
 			throw new InvalidPath($path);
 		}
 
-		$this->path = trim(str_replace('\\', '/', $path), '/') . '/';
+		$this->path = rtrim(str_replace('\\', '/', $path), '/') . '/';
 
 		return $this;
 	}
@@ -217,37 +226,41 @@ abstract class TypeAbstract implements HandlerInterface
 			$translationsByFile = [];
 			foreach ($translationsLocale as $key => $content)
 			{
+				// split file and key into pices
 				$keyParts = array_reverse(array_map('strrev', explode('.', strrev($key), 2)));
 				if (count($keyParts) !== 2)
 				{
 					continue;
 				}
 
-				$fileName = $keyParts[0];
+				// this is our translation key
 				$translationKey = $keyParts[1];
 
-				if (array_key_exists($fileName, $translationsByFile) === false)
+				// this is the translation file with path part
+				$file = $this->getPath() . $locale . '/' . $keyParts[0] . '.' . $this->getFileExtension();
+
+				// is file in map?
+				if (array_key_exists($file, $translationsByFile) === false)
 				{
-					$translationsByFile[$fileName] = [];
+					// create map
+					$translationsByFile[$file] = [];
 				}
 
-				$translationsByFile[$fileName][$translationKey] = $content;
-			}
-
-			$pathToWrite = $this->getPath() . $locale;
-			if (strpos($fileName, '/') !== false)
-			{
-				$pathToWrite .= '/' . basename($fileName);
-			}
-			if (is_dir($pathToWrite) === false && mkdir($pathToWrite, 0777, true) === false)
-			{
-				throw new FailureCreateLocalePath($pathToWrite);
+				// store key and content in map
+				$translationsByFile[$file][$translationKey] = $content;
 			}
 
 			// save to files
-			foreach ($translationsByFile as $fileName => $translationsFile)
+			foreach ($translationsByFile as $file => $translationsFile)
 			{
-				$this->writeFile($pathToWrite . '/' . $fileName . '.' . $this->getFileExtension(), $translationsFile);
+				$path = dirname($file);
+				// create path of file
+				if (is_dir($path) === false && @mkdir($path, 0777, true) === false)
+				{
+					throw new FailureCreateLocalePath($path, $locale);
+				}
+
+				$this->writeFile($file, $translationsFile);
 			}
 		}
 

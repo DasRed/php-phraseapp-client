@@ -5,7 +5,7 @@ use DasRed\PhraseApp\Sessions\Exception\LoginFailed;
 use DasRed\PhraseApp\Sessions\Exception;
 
 /**
- * @coversDefaultClass \DasRed\PhraseApp\Synchronize\Exception\LoginFailed
+ * @coversDefaultClass \DasRed\PhraseApp\Sessions\Exception\LoginFailed
  */
 class LoginFailedTest extends \PHPUnit_Framework_TestCase
 {

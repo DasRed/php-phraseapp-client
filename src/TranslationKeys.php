@@ -32,7 +32,7 @@ class TranslationKeys extends Sessions
 
 		try
 		{
-			$this->methodPatch(self::URL_API . '/' . $this->getId($key), [
+			$this->methodPatch(self::URL_API . $translationKey['id'], [
 				'auth_token' => $this->getSessionToken(),
 				'translation_key' => $translationKey
 			]);
@@ -269,7 +269,7 @@ class TranslationKeys extends Sessions
 
 		try
 		{
-			$this->methodPatch(self::URL_API . $this->getId($key), [
+			$this->methodPatch(self::URL_API . $translationKey['id'], [
 				'auth_token' => $this->getSessionToken(),
 				'translation_key' => $translationKey
 			]);

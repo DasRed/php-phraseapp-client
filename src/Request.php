@@ -1,35 +1,62 @@
 <?php
 namespace DasRed\PhraseApp;
 
-use DasRed\PhraseApp\Request\Exception;
-use DasRed\PhraseApp\Request\Exception\Curl;
+use DasRed\PhraseApp\Request\Exception as RequestException;
 use DasRed\PhraseApp\Request\Exception\Json;
 use DasRed\PhraseApp\Request\Exception\HttpStatus;
+use Zend\Http\Client;
+use Zend\Http\Request as HttpRequest;
 
 class Request
 {
 
-	const METHOD_DELETE = 'delete';
-
-	const METHOD_GET = 'get';
-
-	const METHOD_PATCH = 'patch';
-
-	const METHOD_POST = 'post';
-
-	const METHOD_PUT = 'put';
+	/**
+	 *
+	 * @var string
+	 */
+	const METHOD_DELETE = HttpRequest::METHOD_DELETE;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $authToken = null;
+	const METHOD_GET = HttpRequest::METHOD_GET;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $baseUrl = null;
+	const METHOD_PATCH = HttpRequest::METHOD_PATCH;
+
+	/**
+	 *
+	 * @var string
+	 */
+	const METHOD_POST = HttpRequest::METHOD_POST;
+
+	/**
+	 *
+	 * @var string
+	 */
+	const METHOD_PUT = HttpRequest::METHOD_PUT;
+
+	/**
+	 *
+	 * @var string
+	 */
+	protected $authToken;
+
+	/**
+	 *
+	 * @var string
+	 */
+	protected $baseUrl;
+
+	/**
+	 *
+	 * @var Client
+	 */
+	protected $client;
 
 	/**
 	 *
@@ -45,7 +72,7 @@ class Request
 	 *
 	 * @return string
 	 */
-	protected function getAuthToken()
+	public function getAuthToken()
 	{
 		return $this->authToken;
 	}
@@ -54,9 +81,27 @@ class Request
 	 *
 	 * @return string
 	 */
-	protected function getBaseUrl()
+	public function getBaseUrl()
 	{
 		return $this->baseUrl;
+	}
+
+	/**
+	 *
+	 * @return Client
+	 */
+	public function getClient()
+	{
+		if ($this->client === null)
+		{
+			$adapter = new \Zend\Http\Client\Adapter\Curl();
+			$adapter->setCurlOption(CURLOPT_RETURNTRANSFER, true)->setCurlOption(CURLOPT_SSL_VERIFYPEER, false);
+
+			$this->client = new Client();
+			$this->client->setAdapter($adapter);
+		}
+
+		return $this->client;
 	}
 
 	/**
@@ -118,86 +163,67 @@ class Request
 	 *
 	 * @param string $url
 	 * @param array $parameters
-	 * @throws Exception
+	 * @throws RequestException
 	 */
 	protected function request($url, $method = self::METHOD_GET, array $parameters = array())
 	{
 		$url = $this->getBaseUrl() . $url;
 		$parameters = array_merge([
 			'auth_token' => $this->getAuthToken(),
-			'project_auth_token' => $this->getAuthToken()
+			'project_auth_token' => $this->getAuthToken(),
 		], $parameters);
+
+		// request
+		$client = $this->getClient();
+		$client->reset()->setUri($url)->setMethod($method);
+
+		// set parameters by request
+		switch ($method)
+		{
+			case self::METHOD_POST:
+				$client->setParameterPost($parameters);
+				break;
+
+			case self::METHOD_DELETE:
+			case self::METHOD_PUT:
+			case self::METHOD_PATCH:
+				$jsonParameters = json_encode($parameters);
+				$client->setRawBody($jsonParameters)
+					->getRequest()
+					->getHeaders()
+					->addHeaderLine('Content-Type', 'application/json')
+					->addHeaderLine('Content-Length', strlen($jsonParameters));
+				break;
+
+			case self::METHOD_GET:
+			default:
+				$client->setParameterGet($parameters);
+				break;
+		}
 
 		try
 		{
-			// request
-			$curl = curl_init();
-
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-
-			switch ($method)
-			{
-				case self::METHOD_POST:
-					curl_setopt($curl, CURLOPT_URL, $url);
-					curl_setopt($curl, CURLOPT_POST, true);
-
-					$parameterQuery = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', http_build_query($parameters));
-					curl_setopt($curl, CURLOPT_POSTFIELDS, $parameterQuery);
-					break;
-
-				case self::METHOD_DELETE:
-				case self::METHOD_PUT:
-				case self::METHOD_PATCH:
-					curl_setopt($curl, CURLOPT_URL, $url);
-					curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($method));
-
-					$jsonParameters = json_encode($parameters);
-					curl_setopt($curl, CURLOPT_HTTPHEADER, [
-						'Content-Type: application/json',
-						'Content-Length: ' . strlen($jsonParameters)
-					]);
-					curl_setopt($curl, CURLOPT_POSTFIELDS, $jsonParameters);
-					break;
-
-				case self::METHOD_GET:
-				default:
-					$parameterQuery = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', http_build_query($parameters));
-					curl_setopt($curl, CURLOPT_URL, $url . '?' . $parameterQuery);
-					break;
-			}
-
-			$responseBody = curl_exec($curl);
+			$response = $client->send();
 		}
 		catch (\Exception $exception)
 		{
-			throw new Exception($exception->getMessage(), $exception->getCode());
+			throw new RequestException($exception->getMessage(), $exception->getCode());
 		}
 
 		// react on request info / header status
-		$requestInfo = curl_getinfo($curl);
-		if ((int)floor($requestInfo['http_code'] / 100) !== 2)
+		if ((int)floor($response->getStatusCode() / 100) !== 2)
 		{
-			throw new HttpStatus($responseBody, (int)$requestInfo['http_code']);
+			throw new HttpStatus($response->getBody(), (int)$response->getStatusCode());
 		}
-
-		// response failed
-		if ($responseBody === false)
-		{
-			throw new Curl(curl_error($curl), curl_errno($curl));
-		}
-
-		// close the connection
-		curl_close($curl);
 
 		// convert json
 		try
 		{
-			$result = json_decode($responseBody, JSON_OBJECT_AS_ARRAY);
+			$result = json_decode($response->getBody(), JSON_OBJECT_AS_ARRAY);
 		}
 		catch (\Exception $exception)
 		{
-			throw new Exception($exception->getMessage(), $exception->getCode());
+			throw new RequestException($exception->getMessage(), $exception->getCode());
 		}
 
 		// result failed

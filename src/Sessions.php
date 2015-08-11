@@ -1,7 +1,7 @@
 <?php
 namespace DasRed\PhraseApp;
 
-use DasRed\PhraseApp\Sessions\Exception;
+use DasRed\PhraseApp\Exception as SessionException;
 use DasRed\PhraseApp\Sessions\Exception\LoginFailed;
 
 /**
@@ -15,27 +15,21 @@ class Sessions extends Request
 
 	/**
 	 *
-	 * @var bool
+	 * @var string
 	 */
-	protected $autoSession = false;
+	protected $sessionToken;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $sessionToken = null;
+	protected $userEmail;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $userEmail = null;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $userPassword = null;
+	protected $userPassword;
 
 	/**
 	 *
@@ -78,7 +72,7 @@ class Sessions extends Request
 	 *
 	 * @return string
 	 */
-	protected function getUserEmail()
+	public function getUserEmail()
 	{
 		return $this->userEmail;
 	}
@@ -87,7 +81,7 @@ class Sessions extends Request
 	 *
 	 * @return string
 	 */
-	protected function getUserPassword()
+	public function getUserPassword()
 	{
 		return $this->userPassword;
 	}
@@ -107,7 +101,7 @@ class Sessions extends Request
 					'password' => $this->getUserPassword()
 				]);
 			}
-			catch (Exception $exception)
+			catch (SessionException $exception)
 			{
 				return false;
 			}
@@ -137,7 +131,7 @@ class Sessions extends Request
 					'auth_token' => $this->sessionToken
 				]);
 			}
-			catch (Exception $exception)
+			catch (SessionException $exception)
 			{
 				return false;
 			}
@@ -160,13 +154,6 @@ class Sessions extends Request
 	 */
 	protected function request($url, $method = self::METHOD_GET, array $parameters = array())
 	{
-		if ($this->autoSession === true)
-		{
-			$parameters = array_merge([
-				'auth_token' => $this->getSessionToken()
-			], $parameters);
-		}
-
 		$parameters = array_merge([
 			'project_auth_token' => $this->getAuthToken()
 		], $parameters);

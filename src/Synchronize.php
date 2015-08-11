@@ -31,37 +31,37 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @var string
 	 */
-	protected $authToken = null;
+	protected $authToken;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $baseUrl = null;
+	protected $baseUrl;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $localeDefault = null;
+	protected $localeDefault;
 
 	/**
 	 *
 	 * @var Locales
 	 */
-	protected $phraseLocales = null;
+	protected $phraseLocales;
 
 	/**
 	 *
 	 * @var Translations
 	 */
-	protected $phraseTranslations = null;
+	protected $phraseTranslations;
 
 	/**
 	 *
 	 * @var TranslationKeys
 	 */
-	protected $phraseTranslationKeys = null;
+	protected $phraseTranslationKeys;
 
 	/**
 	 *
@@ -73,7 +73,7 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @var string
 	 */
-	protected $tagForContentChangeFromLocalToRemote = null;
+	protected $tagForContentChangeFromLocalToRemote;
 
 	/**
 	 * current translations with [LOCALE => [KEY => CONTENT]]
@@ -86,13 +86,13 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @var string
 	 */
-	protected $userEmail = null;
+	protected $userEmail;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $userPassword = null;
+	protected $userPassword;
 
 	/**
 	 *
@@ -466,7 +466,8 @@ class Synchronize implements LoggerAwareInterface
 		// sync translation content
 		try
 		{
-			$this->synchronizeLocales()->synchronizeKeys()->synchronizeContent();
+// 			$this->synchronizeLocales()->synchronizeKeys()->synchronizeContent();
+			$this->synchronizeKeys();
 		}
 		catch (Exception $exception)
 		{
@@ -585,6 +586,8 @@ class Synchronize implements LoggerAwareInterface
 				}
 			}
 		}
+// FIXME
+return $this;
 
 		// delete keys
 		$count = count($keysToDelete);
