@@ -25,5 +25,9 @@
 		"psr-4": {
 			"DasRedTest\\PhraseApp\\": "test/"
 		}
-	}
+	},
+
+	"bin": [
+		"bin/tr-sync.php"
+	]
 }
