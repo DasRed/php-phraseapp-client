@@ -90,7 +90,7 @@ class Request
 	 *
 	 * @return Client
 	 */
-	public function getClient()
+	protected function getClient()
 	{
 		if ($this->client === null)
 		{
@@ -217,14 +217,7 @@ class Request
 		}
 
 		// convert json
-		try
-		{
-			$result = json_decode($response->getBody(), JSON_OBJECT_AS_ARRAY);
-		}
-		catch (\Exception $exception)
-		{
-			throw new RequestException($exception->getMessage(), $exception->getCode());
-		}
+		$result = json_decode($response->getBody(), JSON_OBJECT_AS_ARRAY);
 
 		// result failed
 		$jsonLastErrorNumber = json_last_error();

@@ -116,7 +116,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": true, "auth_token": "nuff"}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/sessions/')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_POST)->willReturnSelf();
 		$client->expects($this->once())->method('setParameterPost')->with([
@@ -154,7 +155,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": false}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/sessions/')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_POST)->willReturnSelf();
 		$client->expects($this->once())->method('setParameterPost')->with([
@@ -189,7 +191,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": false}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/sessions/')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_POST)->willReturnSelf();
 		$client->expects($this->once())->method('setParameterPost')->with([
@@ -224,7 +227,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": true}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/sessions/')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_DELETE)->willReturnSelf();
 		$client->expects($this->never())->method('setParameterPost');
@@ -261,7 +265,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": false}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/sessions/')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_DELETE)->willReturnSelf();
 		$client->expects($this->never())->method('setParameterPost');
@@ -295,7 +300,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": true}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/sessions/')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_DELETE)->willReturnSelf();
 		$client->expects($this->never())->method('setParameterPost');
@@ -329,7 +335,8 @@ class SessionsTest extends \PHPUnit_Framework_TestCase
 		$response->expects($this->any())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->any())->method('getBody')->willReturn('{"success": true}');
 
-		$client = $this->getMockBuilder(Client::class)->setMethods(['setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client = $this->getMockBuilder(Client::class)->setMethods(['reset',  'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->any())->method('reset')->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/b')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_POST)->willReturnSelf();
 		$client->expects($this->once())->method('setParameterPost')->with([

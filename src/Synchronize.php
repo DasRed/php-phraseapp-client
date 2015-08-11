@@ -152,7 +152,7 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @return string
 	 */
-	protected function getAuthToken()
+	public function getAuthToken()
 	{
 		return $this->authToken;
 	}
@@ -161,7 +161,7 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @return string
 	 */
-	protected function getBaseUrl()
+	public function getBaseUrl()
 	{
 		return $this->baseUrl;
 	}
@@ -170,7 +170,7 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @return string
 	 */
-	protected function getLocaleDefault()
+	public function getLocaleDefault()
 	{
 		return $this->localeDefault;
 	}
@@ -296,7 +296,7 @@ class Synchronize implements LoggerAwareInterface
 				$result = array_merge($result, $this->getTranslationKeys($locale));
 			}
 
-			return $result;
+			return array_values(array_unique($result));
 		}
 
 		if (array_key_exists($locale, $this->translations) === false)
@@ -331,7 +331,7 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @return string
 	 */
-	protected function getUserEmail()
+	public function getUserEmail()
 	{
 		return $this->userEmail;
 	}
@@ -340,7 +340,7 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @return string
 	 */
-	protected function getUserPassword()
+	public function getUserPassword()
 	{
 		return $this->userPassword;
 	}
@@ -466,7 +466,7 @@ class Synchronize implements LoggerAwareInterface
 		// sync translation content
 		try
 		{
-			$this->synchronizeLocales()->synchronizeKeys()->synchronizeContent();
+			$this->synchronizeLocales()->synchronizeKeys()->synchronizeCleanUpKeys()->synchronizeContent();
 		}
 		catch (Exception $exception)
 		{
@@ -475,6 +475,33 @@ class Synchronize implements LoggerAwareInterface
 		}
 
 		return true;
+	}
+
+	/**
+	 *
+	 * @return self
+	 */
+	protected function synchronizeCleanUpKeys()
+	{
+		// clean up the keys in all other locales other then the main locale
+		$translationsForMainLocale = $this->getTranslations($this->getLocaleDefault());
+		foreach ($this->getTranslationLocales() as $locale)
+		{
+			if ($locale === $this->getLocaleDefault())
+			{
+				continue;
+			}
+
+			foreach ($this->getTranslationKeys($locale) as $keyToDelete)
+			{
+				if (array_key_exists($keyToDelete, $translationsForMainLocale) === false)
+				{
+					$this->removeTranslationKeyFromAllLocales($keyToDelete);
+				}
+			}
+		}
+
+		return $this;
 	}
 
 	/**
@@ -535,7 +562,7 @@ class Synchronize implements LoggerAwareInterface
 				foreach ($keysLocalToStore as $keyLocalToStore)
 				{
 					// add the "new" tag to key if new in defaultlocale
-					if ($locale === $this->getLocaleDefault() && $this->getPhraseTranslationKeys()->addTag($keyLocalToStore, $this->getTagForContentChangeFromLocalToRemote()) === false)
+					if ($this->getTagForContentChangeFromLocalToRemote() !== null && $this->getLocaleDefault() === $locale && $this->getPhraseTranslationKeys()->addTag($keyLocalToStore, $this->getTagForContentChangeFromLocalToRemote()) === false)
 					{
 						throw new FailureStoreContentByTag($keyLocalToStore);
 					}
@@ -579,7 +606,7 @@ class Synchronize implements LoggerAwareInterface
 		{
 			foreach ($keysToCreate as $keyToCreate)
 			{
-				if ($this->synchronizeKeysCreateKey($keyToCreate) === false)
+				if ($this->getPhraseTranslationKeys()->create($keyToCreate) === false)
 				{
 					throw new FailureAddKey($keyToCreate);
 				}
@@ -593,7 +620,7 @@ class Synchronize implements LoggerAwareInterface
 		{
 			foreach ($keysToDelete as $keyToDelete)
 			{
-				if ($this->synchronizeKeysDeleteKey($keyToDelete) === false)
+				if ($this->getPhraseTranslationKeys()->delete($keyToDelete) === false)
 				{
 					throw new FailureDeleteKey($keyToDelete);
 				}
@@ -602,45 +629,7 @@ class Synchronize implements LoggerAwareInterface
 			}
 		}
 
-		// clean up the keys in all other locales other then the main locale
-		$translationsForMainLocale = $this->getTranslations($this->getLocaleDefault());
-		foreach ($this->getTranslationLocales() as $locale)
-		{
-			if ($locale === $this->getLocaleDefault())
-			{
-				continue;
-			}
-
-			foreach ($this->getTranslationKeys($locale) as $keyToDelete)
-			{
-				if (array_key_exists($keyToDelete, $translationsForMainLocale) === false)
-				{
-					$this->removeTranslationKeyFromAllLocales($keyToDelete);
-				}
-			}
-		}
-
 		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $key
-	 * @return boolean
-	 */
-	protected function synchronizeKeysCreateKey($key)
-	{
-		return $this->getPhraseTranslationKeys()->create($key);
-	}
-
-	/**
-	 *
-	 * @param string $key
-	 * @return boolean
-	 */
-	protected function synchronizeKeysDeleteKey($key)
-	{
-		return $this->getPhraseTranslationKeys()->delete($key);
 	}
 
 	/**
