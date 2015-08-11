@@ -2,7 +2,6 @@
 namespace DasRedTest\PhraseApp\Translator;
 
 use DasRed\PhraseApp\Translator\PhraseApp;
-use DasRed\Translation\Translator;
 use DasRed\Parser\BBCode;
 use Zend\Log\Logger;
 use Zend\Log\Writer\Mock;
