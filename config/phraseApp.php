@@ -4,7 +4,7 @@ return [
 	'phraseApp' => [
 		'authToken' => null,
 		'path' => null,
-		'baseUrl' => ' https://phraseapp.com/api/v1/',
+		'baseUrl' => 'https://phraseapp.com/api/v1/',
 		'userEmail' => '',
 		'userPassword' => '',
 		'excludeNames' => [],
