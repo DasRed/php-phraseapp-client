@@ -65,7 +65,7 @@ class Request
 	 */
 	public function __construct($baseUrl, $authToken)
 	{
-		$this->setAuthToken($authToken)->setBaseUrl($baseUrl);
+		$this->setBaseUrl($baseUrl)->setAuthToken($authToken);
 	}
 
 	/**

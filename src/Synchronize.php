@@ -177,7 +177,7 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @return \PhraseApp\Locales
+	 * @return \DasRed\PhraseApp\Locales
 	 */
 	protected function getPhraseLocales()
 	{
@@ -191,7 +191,7 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @return \PhraseApp\Translations
+	 * @return \DasRed\PhraseApp\Translations
 	 */
 	protected function getPhraseTranslations()
 	{
@@ -205,7 +205,7 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @return \PhraseApp\TranslationKeys
+	 * @return \DasRed\PhraseApp\TranslationKeys
 	 */
 	protected function getPhraseTranslationKeys()
 	{
@@ -466,8 +466,7 @@ class Synchronize implements LoggerAwareInterface
 		// sync translation content
 		try
 		{
-// 			$this->synchronizeLocales()->synchronizeKeys()->synchronizeContent();
-			$this->synchronizeKeys();
+			$this->synchronizeLocales()->synchronizeKeys()->synchronizeContent();
 		}
 		catch (Exception $exception)
 		{
@@ -480,7 +479,7 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @return \PhraseApp\Synchronize
+	 * @return self
 	 */
 	protected function synchronizeContent()
 	{
@@ -586,8 +585,6 @@ class Synchronize implements LoggerAwareInterface
 				}
 			}
 		}
-// FIXME
-return $this;
 
 		// delete keys
 		$count = count($keysToDelete);
