@@ -4,7 +4,7 @@ PHP PhraseApp Client for [PhraseApp](https://phraseapp.com) and [API Version 1](
 
 # CLI Usage
 ## Usage
-php bin/tr-sync.php [options] sourcePath
+bin/tr-sync [options] sourcePath
 
 ## Arguments
 sourcePath           Path to search in.

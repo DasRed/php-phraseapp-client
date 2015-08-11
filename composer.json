@@ -28,6 +28,6 @@
 	},
 
 	"bin": [
-		"bin/tr-sync.php"
+		"bin/tr-sync"
 	]
 }
