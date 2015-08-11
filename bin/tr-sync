@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 use Zend\Config\Factory;
 use Zend\Console\Console;
