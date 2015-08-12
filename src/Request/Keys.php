@@ -197,7 +197,7 @@ class Keys extends Request
 	/**
 	 *
 	 * @param string $key
-	 * @return int
+	 * @return int|bool
 	 */
 	protected function get($key)
 	{

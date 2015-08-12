@@ -246,7 +246,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		$count = count($locales) * $countPerLocale;
 
 		$this->log('Fetching full translation contents');
-		$contentRemoteCompleteByLocale = $this->getPhraseTranslations()->fetch();
+		$contentRemoteCompleteByLocale = $this->getPhraseAppTranslations()->fetch();
 
 		$this->log('Updating translation contents');
 		$countDifferencesLocal = 0;
@@ -293,14 +293,14 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 				foreach ($keysLocalToStore as $keyLocalToStore)
 				{
 					// add the "new" tag to key if new in defaultlocale
-					if ($this->getConfig()->getTagForContentChangeFromLocalToRemote() !== null && $this->getConfig()->getLocaleDefault() === $locale && $this->getPhraseKeys()->addTag($keyLocalToStore, $this->getConfig()->getTagForContentChangeFromLocalToRemote()) === false)
+					if ($this->getConfig()->getTagForContentChangeFromLocalToRemote() !== null && $this->getConfig()->getLocaleDefault() === $locale && $this->getPhraseAppKeys()->addTag($keyLocalToStore, $this->getConfig()->getTagForContentChangeFromLocalToRemote()) === false)
 					{
 						throw new FailureStoreContentByTag($keyLocalToStore);
 					}
 
 					// store content remote
 					$content = $contentLocale[$keyLocalToStore];
-					if ($this->getPhraseTranslations()->store($locale, $keyLocalToStore, $content) === false)
+					if ($this->getPhraseAppTranslations()->store($locale, $keyLocalToStore, $content) === false)
 					{
 						throw new FailureStoreContent($keyLocalToStore);
 					}
@@ -324,7 +324,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 		// fetching the list of current translation keys in PhraseApp
 		$this->log('Fetching keys from PhraseApp');
-		$keysRemote = $this->getPhraseKeys()->fetch();
+		$keysRemote = $this->getPhraseAppKeys()->fetch();
 
 		// find keys for sync
 		$keysToCreate = array_diff($keysLocal, $keysRemote);
@@ -337,10 +337,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		{
 			foreach ($keysToCreate as $keyToCreate)
 			{
-				if ($this->getPhraseKeys()->create($keyToCreate) === false)
-				{
-					throw new FailureAddKey($keyToCreate);
-				}
+				$this->synchronizeKeysCreateKey($keyToCreate);
 			}
 		}
 
@@ -351,13 +348,28 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		{
 			foreach ($keysToDelete as $keyToDelete)
 			{
-				if ($this->getPhraseKeys()->delete($keyToDelete) === false)
+				if ($this->getPhraseAppKeys()->delete($keyToDelete) === false)
 				{
 					throw new FailureDeleteKey($keyToDelete);
 				}
 
 				$this->removeTranslationKeyFromAllLocales($keyToDelete);
 			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 *
+	 * @param string $key
+	 * @return self
+	 */
+	protected function synchronizeKeysCreateKey($key)
+	{
+		if ($this->getPhraseAppKeys()->create($key) === false)
+		{
+			throw new FailureAddKey($key);
 		}
 
 		return $this;
@@ -374,7 +386,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 		$this->log('Fetching locales from PhraseApp');
 		// fetching the list of current translation keys in PhraseApp
-		$localesRemote = $this->getPhraseLocales()->fetch();
+		$localesRemote = $this->getPhraseAppLocales()->fetch();
 
 		// find locales for sync
 		$localesToCreateRemote = array_diff($localesLocal, $localesRemote);
@@ -387,7 +399,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		{
 			foreach ($localesToCreateRemote as $localeToCreateRemote)
 			{
-				if ($this->getPhraseLocales()->create($localeToCreateRemote) === false)
+				if ($this->getPhraseAppLocales()->create($localeToCreateRemote) === false)
 				{
 					throw new FailureAddLocale($localeToCreateRemote);
 				}

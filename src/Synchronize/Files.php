@@ -3,6 +3,7 @@ namespace DasRed\PhraseApp\Synchronize;
 
 use DasRed\PhraseApp\Synchronize;
 use DasRed\PhraseApp\Synchronize\Files\HandlerInterface;
+use DasRed\PhraseApp\Synchronize\Exception\FailureAddKey;
 
 class Files extends Synchronize
 {
@@ -64,7 +65,8 @@ class Files extends Synchronize
 	/**
 	 *
 	 * @param string $key
-	 * @return boolean
+	 * @return self
+	 * @throws FailureAddKey
 	 */
 	protected function synchronizeKeysCreateKey($key)
 	{
@@ -86,7 +88,12 @@ class Files extends Synchronize
 		$tags = array_unique($tags, SORT_NATURAL);
 		sort($tags, SORT_NATURAL);
 
-		return $this->getPhraseKeys()->create($key, $description, $tags);
+		if ($this->getPhraseAppKeys()->create($key, $description, $tags) === false)
+		{
+			throw new FailureAddKey($key);
+		}
+
+		return $this;
 	}
 
 	/**
