@@ -7,8 +7,6 @@
 
 	"require": {
 		"php": ">=5.5",
-		"zendframework/zend-config": "@stable",
-		"zendframework/zend-servicemanager": "@stable",
 		"zendframework/zend-http": "@stable",
 		"dasred/zend-console": "@stable",
 		"dasred/zend-log": "@stable",

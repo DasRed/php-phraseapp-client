@@ -61,7 +61,7 @@ class Config
 	 *
 	 * @var string
 	 */
-	protected $tagForContentChangeFromLocalToRemote;
+	protected $tagForContentChangeFromLocalToRemote = 'newContent';
 
 	/**
 	 *
