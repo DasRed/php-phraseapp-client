@@ -2,19 +2,20 @@
 namespace DasRed\PhraseApp\Translator;
 
 use DasRed\Translation\Translator;
+
 class PhraseApp extends Translator
 {
 	/**
 	 *
 	 * @var string
 	 */
-	const PREFIX = '[[__phrase_';
+	const PREFIX = '{{__phrase_';
 
 	/**
 	 *
 	 * @var string
 	 */
-	const SUFFIX = '__]]';
+	const SUFFIX = '__}}';
 
 	/**
 	 * (non-PHPdoc)
