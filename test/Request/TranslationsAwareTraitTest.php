@@ -12,8 +12,7 @@ class TranslationsAwareTraitTest extends \PHPUnit_Framework_TestCase
 {
 
 	/**
-	 * @covers ::getConfig
-	 * @covers ::setConfig
+	 * @covers ::getPhraseAppTranslations
 	 */
 	public function testGetSetConfig()
 	{

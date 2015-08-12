@@ -5,13 +5,13 @@ use DasRed\PhraseApp\Config;
 use DasRed\PhraseApp\Config\Exception\InvalidPreferDirection;
 
 /**
- * @coversDefault \DasRed\PhraseApp\Config
+ * @coversDefaultClass \DasRed\PhraseApp\Config
  */
 class ConfigTest extends \PHPUnit_Framework_TestCase
 {
 
 	/**
-	 * @covers ::__construct()
+	 * @covers ::__construct
 	 */
 	public function test__construct()
 	{
@@ -24,8 +24,8 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getAccessToken()
-	 * @covers ::setAccessToken()
+	 * @covers ::getAccessToken
+	 * @covers ::setAccessToken
 	 */
 	public function testGetSetAccessToken()
 	{
@@ -37,8 +37,8 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getApplicationName()
-	 * @covers ::setApplicationName()
+	 * @covers ::getApplicationName
+	 * @covers ::setApplicationName
 	 */
 	public function testGetSetApplicationName()
 	{
@@ -50,8 +50,8 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getBaseUrl()
-	 * @covers ::setBaseUrl()
+	 * @covers ::getBaseUrl
+	 * @covers ::setBaseUrl
 	 */
 	public function testGetSetBaseUrl()
 	{
@@ -63,8 +63,8 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getLocaleDefault()
-	 * @covers ::setLocaleDefault()
+	 * @covers ::getLocaleDefault
+	 * @covers ::setLocaleDefault
 	 */
 	public function testGetSetLocaleDefault()
 	{

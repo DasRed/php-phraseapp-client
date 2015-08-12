@@ -579,7 +579,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
 
 	/**
-	 * @covers :: request
+	 * @covers ::request
 	 */
 	public function testRequestSuccessWithoutParameters()
 	{

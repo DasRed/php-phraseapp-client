@@ -12,8 +12,7 @@ class KeysAwareTraitTest extends \PHPUnit_Framework_TestCase
 {
 
 	/**
-	 * @covers ::getConfig
-	 * @covers ::setConfig
+	 * @covers ::getPhraseAppKeys
 	 */
 	public function testGetSetConfig()
 	{

@@ -12,8 +12,7 @@ class LocalesAwareTraitTest extends \PHPUnit_Framework_TestCase
 {
 
 	/**
-	 * @covers ::getConfig
-	 * @covers ::setConfig
+	 * @covers ::getPhraseAppLocales
 	 */
 	public function testGetSetConfig()
 	{
