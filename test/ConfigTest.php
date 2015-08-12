@@ -15,8 +15,9 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function test__construct()
 	{
-		$config = new Config('a', 'de', 'b', 'c');
+		$config = new Config('pp', 'a', 'de', 'b', 'c');
 
+		$this->assertSame('pp', $config->getProjectId());
 		$this->assertSame('a', $config->getAccessToken());
 		$this->assertSame('de', $config->getLocaleDefault());
 		$this->assertSame('b', $config->getApplicationName());
@@ -29,7 +30,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetAccessToken()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertSame('a', $config->getAccessToken());
 		$this->assertSame($config, $config->setAccessToken('b'));
@@ -42,7 +43,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetApplicationName()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertSame('PHP PhraseApp Client (https://github.com/DasRed/php-phraseapp-client)', $config->getApplicationName());
 		$this->assertSame($config, $config->setApplicationName('b'));
@@ -55,7 +56,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetBaseUrl()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertSame('https://api.phraseapp.com/api/v2/', $config->getBaseUrl());
 		$this->assertSame($config, $config->setBaseUrl('b'));
@@ -68,7 +69,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetLocaleDefault()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertSame('de', $config->getLocaleDefault());
 		$this->assertSame($config, $config->setLocaleDefault('b'));
@@ -81,7 +82,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetPreferDirectionSuccess()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertSame(Config::PREFER_REMOTE, $config->getPreferDirection());
 		$this->assertSame($config, $config->setPreferDirection(Config::PREFER_LOCAL));
@@ -96,7 +97,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetPreferDirectionFailed()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->setExpectedException(InvalidPreferDirection::class);
 		$config->setPreferDirection('nuff');
@@ -108,12 +109,25 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetTagForContentChangeFromLocalToRemote()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertNull($config->getTagForContentChangeFromLocalToRemote());
 		$this->assertSame($config, $config->setTagForContentChangeFromLocalToRemote('nuff'));
 		$this->assertSame('nuff', $config->getTagForContentChangeFromLocalToRemote());
 		$this->assertSame($config, $config->setTagForContentChangeFromLocalToRemote('narf'));
 		$this->assertSame('narf', $config->getTagForContentChangeFromLocalToRemote());
+	}
+
+	/**
+	 * @covers ::getProjectId
+	 * @covers ::setProjectId
+	 */
+	public function testGetSetProjectId()
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->assertSame('pp', $config->getProjectId());
+		$this->assertSame($config, $config->setProjectId('b'));
+		$this->assertSame('b', $config->getProjectId());
 	}
 }

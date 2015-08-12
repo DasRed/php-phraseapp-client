@@ -16,7 +16,7 @@ class LocalesTest extends \PHPUnit_Framework_TestCase
 	{
 		parent::setUp();
 
-		$this->config = new Config('b', 'de', 'appName', 'a');
+		$this->config = new Config('pp', 'b', 'de', 'appName', 'a');
 	}
 
 	public function tearDown()

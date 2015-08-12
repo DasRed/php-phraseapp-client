@@ -198,6 +198,7 @@ class Keys extends Request
 	 *
 	 * @param string $key
 	 * @return int|bool
+	 * @see http://docs.phraseapp.com/api/v2/keys/#search
 	 */
 	protected function get($key)
 	{

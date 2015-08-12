@@ -19,7 +19,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
 	public function setUp()
 	{
-		$this->config = new Config('b', 'de', 'userAgentName', 'a');
+		$this->config = new Config('pp', 'b', 'de', 'userAgentName', 'a');
 	}
 
 	public function tearDown()
@@ -34,7 +34,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testConstruct()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 		$request = new Request($config);
 
 		$this->assertSame($config, $request->getConfig());
@@ -577,7 +577,6 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals(['success' => true], $reflectionMethod->invoke($request, 'b', \Zend\Http\Request::METHOD_HEAD, ['a' => 1]));
 	}
 
-
 	/**
 	 * @covers ::request
 	 */
@@ -614,5 +613,45 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$reflectionMethod->setAccessible(true);
 
 		$this->assertEquals(['success' => true], $reflectionMethod->invoke($request, 'b', Request::METHOD_GET));
+	}
+
+	/**
+	 * @covers ::request
+	 */
+	public function testRequestSuccessWithProjectId()
+	{
+		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
+		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+			['Content-Type', 'application/json'],
+			['User-Agent', $this->config->getApplicationName()],
+			['Authorization', 'token ' . $this->config->getAccessToken()]
+		)->willReturnSelf();
+
+		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
+		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
+
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
+		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+
+		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
+		$client->expects($this->once())->method('reset')->with()->willReturnSelf();
+		$client->expects($this->once())->method('setUri')->with('https://api.phraseapp.com/api/v2/projects/abcd1234cdef1234abcd1234cdef1234/translations/snuff/abcd1234cdef1234abcd1234cdef1234/nuff')->willReturnSelf();
+		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_GET)->willReturnSelf();
+		$client->expects($this->never())->method('setParameterPost');
+		$client->expects($this->never())->method('setParameterGet');
+		$client->expects($this->never())->method('setRawBody');
+		$client->expects($this->once())->method('send')->with()->willReturn($response);
+
+		$request = $this->getMockBuilder(Request::class)->setMethods(['getClient'])->setConstructorArgs([$this->config])->getMock();
+		$request->expects($this->any())->method('getClient')->willReturn($client);
+
+		$this->config->setProjectId('abcd1234cdef1234abcd1234cdef1234')->setBaseUrl('https://api.phraseapp.com/api/v2/projects/:project_id/translations');
+
+		$reflectionMethod = new \ReflectionMethod($request, 'request');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertEquals(['success' => true], $reflectionMethod->invoke($request, 'snuff/:PROJECT_ID/nuff', Request::METHOD_GET));
 	}
 }

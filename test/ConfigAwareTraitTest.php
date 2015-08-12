@@ -16,8 +16,8 @@ class ConfigAwareTraitTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetConfig()
 	{
-		$configA = new Config('a', 'de');
-		$configB = new Config('a', 'de');
+		$configA = new Config('pp', 'a', 'de');
+		$configB = new Config('pp', 'a', 'de');
 
 		$trait = $this->getMockBuilder('\DasRed\PhraseApp\ConfigAwareTrait')->setMethods([])->getMockForTrait();
 

@@ -137,10 +137,12 @@ class Request implements ConfigAwareInterface
 	 */
 	protected function request($url, $method = self::METHOD_GET, array $parameters = null)
 	{
+		$url = str_ireplace(':project_id', $this->getConfig()->getProjectId(), $this->getConfig()->getBaseUrl() . $url);
+
 		// request
 		$client = $this->getClient();
 		$client->reset()
-			->setUri($this->getConfig()->getBaseUrl() . $url)
+			->setUri($url)
 			->setMethod($method)
 			->getRequest()
 			->getHeaders()

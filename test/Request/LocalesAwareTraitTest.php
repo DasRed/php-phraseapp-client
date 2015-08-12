@@ -16,7 +16,7 @@ class LocalesAwareTraitTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSetConfig()
 	{
-		$config = new Config('a', 'de');
+		$config = new Config('pp', 'a', 'de');
 
 		$trait = $this->getMockBuilder('\DasRed\PhraseApp\Request\LocalesAwareTrait')->setMethods(['getConfig'])->getMockForTrait();
 		$trait->expects($this->any())->method('getConfig')->willReturn($config);

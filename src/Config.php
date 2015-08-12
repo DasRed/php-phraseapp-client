@@ -48,6 +48,11 @@ class Config
 	protected $preferDirection = self::PREFER_REMOTE;
 
 	/**
+	 * @var string
+	 */
+	protected $projectId;
+
+	/**
 	 *
 	 * @var string
 	 */
@@ -55,13 +60,15 @@ class Config
 
 	/**
 	 *
+	 * @param string $projectId
 	 * @param string $accessToken
+	 * @param string $localeDefault
 	 * @param string $applicationName
 	 * @param string $baseUrl
 	 */
-	public function __construct($accessToken, $localeDefault, $applicationName = 'PHP PhraseApp Client (https://github.com/DasRed/php-phraseapp-client)', $baseUrl = 'https://api.phraseapp.com/api/v2/')
+	public function __construct($projectId, $accessToken, $localeDefault, $applicationName = 'PHP PhraseApp Client (https://github.com/DasRed/php-phraseapp-client)', $baseUrl = 'https://api.phraseapp.com/api/v2/')
 	{
-		$this->setAccessToken($accessToken)->setLocaleDefault($localeDefault)->setApplicationName($applicationName)->setBaseUrl($baseUrl);
+		$this->setProjectId($projectId)->setAccessToken($accessToken)->setLocaleDefault($localeDefault)->setApplicationName($applicationName)->setBaseUrl($baseUrl);
 	}
 
 	/**
@@ -106,6 +113,14 @@ class Config
 	public function getPreferDirection()
 	{
 		return $this->preferDirection;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getProjectId()
+	{
+		return $this->projectId;
 	}
 
 	/**
@@ -180,6 +195,17 @@ class Config
 		}
 
 		$this->preferDirection = $preferDirection;
+
+		return $this;
+	}
+
+	/**
+	 * @param string $projectId
+	 * @return self
+	 */
+	public function setProjectId($projectId)
+	{
+		$this->projectId = $projectId;
 
 		return $this;
 	}
