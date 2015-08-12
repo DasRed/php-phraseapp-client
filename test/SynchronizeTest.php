@@ -30,7 +30,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		parent::setUp();
 
 		$this->config = new Config('pp', 'b', 'de');
-		$this->config->setApplicationName('appName')->setBaseUrl('a');
+		$this->config->setApplicationName('appName')->setBaseUrl('a')->setTagForContentChangeFromLocalToRemote(null);
 
 		$this->logger = new Logger();
 		$this->writer = new Mock();

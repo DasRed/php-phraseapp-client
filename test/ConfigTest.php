@@ -173,11 +173,13 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	{
 		$config = new Config('pp', 'a', 'de');
 
-		$this->assertNull($config->getTagForContentChangeFromLocalToRemote());
+		$this->assertSame('newContent', $config->getTagForContentChangeFromLocalToRemote());
 		$this->assertSame($config, $config->setTagForContentChangeFromLocalToRemote('nuff'));
 		$this->assertSame('nuff', $config->getTagForContentChangeFromLocalToRemote());
 		$this->assertSame($config, $config->setTagForContentChangeFromLocalToRemote('narf'));
 		$this->assertSame('narf', $config->getTagForContentChangeFromLocalToRemote());
+		$this->assertSame($config, $config->setTagForContentChangeFromLocalToRemote(null));
+		$this->assertNull($config->getTagForContentChangeFromLocalToRemote());
 	}
 
 	/**
