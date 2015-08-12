@@ -53,7 +53,7 @@ class Translations extends Request implements KeysAwareInterface, LocalesAwareIn
 		foreach ($this->getCollection() as $entry)
 		{
 			$locale = $entry['locale']['code'];
-			$key = $entry['locale']['name'];
+			$key = $entry['key']['name'];
 			$content = $entry['content'];
 
 			if (array_key_exists($locale, $result) === false)

@@ -12,6 +12,14 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 {
 	protected $config;
 
+	protected $loadWithData = [
+		1 => ['id' => 1, 'content' => 'c1', 'locale' => ['id' => 10, 'code' => 'de-DE'], 'key' => ['id' => 15, 'name' => 'c1key']],
+		2 => ['id' => 2, 'content' => 'c2', 'locale' => ['id' => 20, 'code' => 'de-DE'], 'key' => ['id' => 25, 'name' => 'c2key']],
+		3 => ['id' => 3, 'content' => 'c3', 'locale' => ['id' => 30, 'code' => 'de-DE'], 'key' => ['id' => 35, 'name' => 'c3key']],
+		4 => ['id' => 4, 'content' => 'c4', 'locale' => ['id' => 40, 'code' => 'de-DE'], 'key' => ['id' => 45, 'name' => 'c4key']],
+		5 => ['id' => 5, 'content' => 'c5', 'locale' => ['id' => 50, 'code' => 'ru-RU'], 'key' => ['id' => 55, 'name' => 'c5key']],
+	];
+
 	public function setUp()
 	{
 		parent::setUp();
@@ -27,35 +35,61 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @covers ::create
+	 */
+	public function testCreateSuccess()
+	{
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'methodPost'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->once())->method('methodPost')->with(Translations::URL_API)->willReturn(
+			['id' => 6, 'content' => 'c6', 'locale' => ['id' => 60, 'code' => 'ru-RU'], 'key' => ['id' => 65, 'name' => 'c6key']]
+		);
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'create');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertTrue($reflectionMethod->invoke($translations, '60', 65, 'c6'));
+		$this->assertCount(6, $translations->getCollection());
+		$this->assertEquals(
+			['id' => 6, 'content' => 'c6', 'locale' => ['id' => 60, 'code' => 'ru-RU'], 'key' => ['id' => 65, 'name' => 'c6key']]
+		, $translations->getCollection()->get(6));
+	}
+
+	/**
+	 * @covers ::create
+	 */
+	public function testCreateSuccessFailed()
+	{
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'methodPost'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->once())->method('methodPost')->with(Translations::URL_API)->willThrowException(new \DasRed\PhraseApp\Exception());
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'create');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertFalse($reflectionMethod->invoke($translations, '60', 65, 'c6'));
+		$this->assertCount(5, $translations->getCollection());
+		$this->assertNull($translations->getCollection()->get(6));
+	}
+
+	/**
 	 * @covers ::fetch
 	 */
 	public function testFetchSuccess()
 	{
-		$this->markTestIncomplete();
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodGet')->with('translations/')->willReturn([
-			'en-UK' => [
-				['translation_key' => ['name' => 'nuff'], 'content' => 'narf'],
-				['translation_key' => ['name' => 'lol'], 'content' => 'rofl'],
-				['translation_key' => ['name' => 'muh'], 'content' => 'mäh'],
-			],
-			'de-DE' => [
-				['translation_key' => ['name' => 'abc'], 'content' => 'def'],
-				['translation_key' => ['name' => 'nuff'], 'content' => 'narf'],
-				['translation_key' => ['name' => 'lol'], 'content' => 'rofl'],
-			],
-		]);
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'methodGet'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->never())->method('methodGet');
 
 		$this->assertEquals([
-			'en-UK' => [
-				'nuff' => 'narf',
-				'lol' => 'rofl',
-				'muh' => 'mäh',
-			],
 			'de-DE' => [
-				'abc' => 'def',
-				'nuff' => 'narf',
-				'lol' => 'rofl',
+				'c1key' => 'c1',
+				'c2key' => 'c2',
+				'c3key' => 'c3',
+				'c4key' => 'c4',
+			],
+			'ru-RU' => [
+				'c5key' => 'c5',
 			]
 		], $translations->fetch());
 	}
@@ -124,15 +158,49 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 		$this->assertFalse($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
 	}
 
-
-	public function testCreate()
+	/**
+	 * @covers ::update
+	 */
+	public function testUpdateSuccess()
 	{
-		$this->markTestIncomplete();
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'methodPatch'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->once())->method('methodPatch')->with(Translations::URL_API . 5, [
+			'content' => 'narf'
+		])->willReturn(
+			['id' => 5, 'content' => 'narf', 'locale' => ['id' => 50, 'code' => 'ru-RU'], 'key' => ['id' => 55, 'name' => 'c5key']]
+		);
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'update');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertTrue($reflectionMethod->invoke($translations, 5, 'narf'));
+		$this->assertCount(5, $translations->getCollection());
+		$this->assertEquals(
+			['id' => 5, 'content' => 'narf', 'locale' => ['id' => 50, 'code' => 'ru-RU'], 'key' => ['id' => 55, 'name' => 'c5key']]
+		, $translations->getCollection()->get(5));
 	}
 
-	public function testUpdate()
+	/**
+	 * @covers ::update
+	 */
+	public function testUpdateFailed()
 	{
-		$this->markTestIncomplete();
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'methodPatch'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->once())->method('methodPatch')->with(Translations::URL_API . 5, [
+			'content' => 'narf'
+		])->willThrowException(new \DasRed\PhraseApp\Exception());
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'update');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertFalse($reflectionMethod->invoke($translations, 5, 'narf'));
+		$this->assertCount(5, $translations->getCollection());
+		$this->assertEquals(
+			['id' => 5, 'content' => 'c5', 'locale' => ['id' => 50, 'code' => 'ru-RU'], 'key' => ['id' => 55, 'name' => 'c5key']]
+		, $translations->getCollection()->get(5));
+
 	}
 
 	/**
