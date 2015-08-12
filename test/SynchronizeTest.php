@@ -29,7 +29,9 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	{
 		parent::setUp();
 
-		$this->config = new Config('pp', 'b', 'de', 'appName', 'a');
+		$this->config = new Config('pp', 'b', 'de');
+		$this->config->setApplicationName('appName')->setBaseUrl('a');
+
 		$this->logger = new Logger();
 		$this->writer = new Mock();
 		$this->logger->addWriter($this->writer);

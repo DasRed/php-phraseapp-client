@@ -19,7 +19,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
 	public function setUp()
 	{
-		$this->config = new Config('pp', 'b', 'de', 'userAgentName', 'a');
+		parent::setUp();
+
+		$this->config = new Config('pp', 'b', 'de');
+		$this->config->setApplicationName('userAgentName')->setBaseUrl('a');
 	}
 
 	public function tearDown()

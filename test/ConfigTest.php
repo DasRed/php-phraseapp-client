@@ -3,25 +3,40 @@ namespace DasRedTest\PhraseApp;
 
 use DasRed\PhraseApp\Config;
 use DasRed\PhraseApp\Config\Exception\InvalidPreferDirection;
+use DasRed\PhraseApp\Config\Exception\AccessTokenCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\ApplicationNameCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\BaseUrlCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\LocaleDefaultCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\ProjectIdCanNotBeEmpty;
 
 /**
  * @coversDefaultClass \DasRed\PhraseApp\Config
  */
 class ConfigTest extends \PHPUnit_Framework_TestCase
 {
+	public function	dataProviderEmpty()
+	{
+		return [
+			[null],
+			[''],
+			['0'],
+			[0],
+			[0.0],
+			[false],
+			[[]],
+		];
+	}
 
 	/**
 	 * @covers ::__construct
 	 */
 	public function test__construct()
 	{
-		$config = new Config('pp', 'a', 'de', 'b', 'c');
+		$config = new Config('pp', 'a', 'de');
 
 		$this->assertSame('pp', $config->getProjectId());
 		$this->assertSame('a', $config->getAccessToken());
 		$this->assertSame('de', $config->getLocaleDefault());
-		$this->assertSame('b', $config->getApplicationName());
-		$this->assertSame('c/', $config->getBaseUrl());
 	}
 
 	/**
@@ -38,6 +53,18 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @covers ::setAccessToken
+	 * @dataProvider dataProviderEmpty
+	 */
+	public function testSetAccessToken($value)
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->setExpectedException(AccessTokenCanNotBeEmpty::class);
+		$config->setAccessToken($value);
+	}
+
+	/**
 	 * @covers ::getApplicationName
 	 * @covers ::setApplicationName
 	 */
@@ -48,6 +75,18 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame('PHP PhraseApp Client (https://github.com/DasRed/php-phraseapp-client)', $config->getApplicationName());
 		$this->assertSame($config, $config->setApplicationName('b'));
 		$this->assertSame('b', $config->getApplicationName());
+	}
+
+	/**
+	 * @covers ::setApplicationName
+	 * @dataProvider dataProviderEmpty
+	 */
+	public function testSetApplicationName($value)
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->setExpectedException(ApplicationNameCanNotBeEmpty::class);
+		$config->setApplicationName($value);
 	}
 
 	/**
@@ -64,6 +103,18 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @covers ::setBaseUrl
+	 * @dataProvider dataProviderEmpty
+	 */
+	public function testSetBaseUrl($value)
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->setExpectedException(BaseUrlCanNotBeEmpty::class);
+		$config->setBaseUrl($value);
+	}
+
+	/**
 	 * @covers ::getLocaleDefault
 	 * @covers ::setLocaleDefault
 	 */
@@ -74,6 +125,18 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame('de', $config->getLocaleDefault());
 		$this->assertSame($config, $config->setLocaleDefault('b'));
 		$this->assertSame('b', $config->getLocaleDefault());
+	}
+
+	/**
+	 * @covers ::setLocaleDefault
+	 * @dataProvider dataProviderEmpty
+	 */
+	public function testSetLocaleDefault($value)
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->setExpectedException(LocaleDefaultCanNotBeEmpty::class);
+		$config->setLocaleDefault($value);
 	}
 
 	/**
@@ -92,10 +155,9 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getPreferDirection
 	 * @covers ::setPreferDirection
 	 */
-	public function testGetSetPreferDirectionFailed()
+	public function testSetPreferDirection()
 	{
 		$config = new Config('pp', 'a', 'de');
 
@@ -129,5 +191,17 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame('pp', $config->getProjectId());
 		$this->assertSame($config, $config->setProjectId('b'));
 		$this->assertSame('b', $config->getProjectId());
+	}
+
+	/**
+	 * @covers ::setProjectId
+	 * @dataProvider dataProviderEmpty
+	 */
+	public function testSetProjectId($value)
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->setExpectedException(ProjectIdCanNotBeEmpty::class);
+		$config->setProjectId($value);
 	}
 }

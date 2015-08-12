@@ -2,6 +2,11 @@
 namespace DasRed\PhraseApp;
 
 use DasRed\PhraseApp\Config\Exception\InvalidPreferDirection;
+use DasRed\PhraseApp\Config\Exception\ProjectIdCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\AccessTokenCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\LocaleDefaultCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\ApplicationNameCanNotBeEmpty;
+use DasRed\PhraseApp\Config\Exception\BaseUrlCanNotBeEmpty;
 
 class Config
 {
@@ -28,13 +33,13 @@ class Config
 	 *
 	 * @var string
 	 */
-	protected $applicationName;
+	protected $applicationName = 'PHP PhraseApp Client (https://github.com/DasRed/php-phraseapp-client)';
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $baseUrl;
+	protected $baseUrl = 'https://api.phraseapp.com/api/v2/';
 
 	/**
 	 * @var string
@@ -63,12 +68,12 @@ class Config
 	 * @param string $projectId
 	 * @param string $accessToken
 	 * @param string $localeDefault
-	 * @param string $applicationName
-	 * @param string $baseUrl
 	 */
-	public function __construct($projectId, $accessToken, $localeDefault, $applicationName = 'PHP PhraseApp Client (https://github.com/DasRed/php-phraseapp-client)', $baseUrl = 'https://api.phraseapp.com/api/v2/')
+	public function __construct($projectId, $accessToken, $localeDefault)
 	{
-		$this->setProjectId($projectId)->setAccessToken($accessToken)->setLocaleDefault($localeDefault)->setApplicationName($applicationName)->setBaseUrl($baseUrl);
+		$this->setProjectId($projectId)
+			->setAccessToken($accessToken)
+			->setLocaleDefault($localeDefault);
 	}
 
 	/**
@@ -139,6 +144,11 @@ class Config
 	 */
 	public function setAccessToken($accessToken)
 	{
+		if (empty($accessToken) === true)
+		{
+			throw new AccessTokenCanNotBeEmpty();
+		}
+
 		$this->accessToken = $accessToken;
 
 		return $this;
@@ -151,6 +161,11 @@ class Config
 	 */
 	public function setApplicationName($applicationName)
 	{
+		if (empty($applicationName) === true)
+		{
+			throw new ApplicationNameCanNotBeEmpty();
+		}
+
 		$this->applicationName = $applicationName;
 
 		return $this;
@@ -163,6 +178,11 @@ class Config
 	 */
 	public function setBaseUrl($baseUrl)
 	{
+		if (empty($baseUrl) === true)
+		{
+			throw new BaseUrlCanNotBeEmpty();
+		}
+
 		$this->baseUrl = rtrim($baseUrl, '/') . '/';
 
 		return $this;
@@ -174,6 +194,11 @@ class Config
 	 */
 	public function setLocaleDefault($localeDefault)
 	{
+		if (empty($localeDefault) === true)
+		{
+			throw new LocaleDefaultCanNotBeEmpty();
+		}
+
 		$this->localeDefault = $localeDefault;
 
 		return $this;
@@ -205,6 +230,11 @@ class Config
 	 */
 	public function setProjectId($projectId)
 	{
+		if (empty($projectId) === true)
+		{
+			throw new ProjectIdCanNotBeEmpty();
+		}
+
 		$this->projectId = $projectId;
 
 		return $this;
@@ -221,5 +251,4 @@ class Config
 
 		return $this;
 	}
-
 }

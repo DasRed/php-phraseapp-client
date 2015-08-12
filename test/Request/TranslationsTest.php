@@ -42,7 +42,9 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	{
 		parent::setUp();
 
-		$this->config = new Config('pp', 'b', 'de', 'appName', 'a');
+		$this->config = new Config('pp', 'b', 'de');
+		$this->config->setApplicationName('appName')->setBaseUrl('a');
+
 		$this->locales = new Locales($this->config);
 		$this->locales->getCollection()->combine($this->localesData);
 		$this->keys = new Keys($this->config);
