@@ -373,30 +373,33 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testRequestSuccessMethodPOST()
 	{
+		$jsonParameters = json_encode([
+			'a' => 1,
+		]);
+
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
-			['Authorization', 'token ' . $this->config->getAccessToken()]
+			['Authorization', 'token ' . $this->config->getAccessToken()],
+			['Content-Length', strlen($jsonParameters)]
 		)->willReturnSelf();
 
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
-		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
+		$request->expects($this->exactly(2))->method('getHeaders')->with()->willReturn($headers);
 
 		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
-		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
+		$client->expects($this->exactly(2))->method('getRequest')->with()->willReturn($request);
 		$client->expects($this->once())->method('reset')->with()->willReturnSelf();
 		$client->expects($this->once())->method('setUri')->with('a/b')->willReturnSelf();
 		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_POST)->willReturnSelf();
-		$client->expects($this->once())->method('setParameterPost')->with([
-			'a' => 1,
-		])->willReturnSelf();
+		$client->expects($this->never())->method('setParameterPost');
 		$client->expects($this->never())->method('setParameterGet');
-		$client->expects($this->never())->method('setRawBody');
+		$client->expects($this->once())->method('setRawBody')->with($jsonParameters)->willReturnSelf();
 		$client->expects($this->once())->method('send')->with()->willReturn($response);
 
 		$request = $this->getMockBuilder(Request::class)->setMethods(['getClient'])->setConstructorArgs([$this->config])->getMock();

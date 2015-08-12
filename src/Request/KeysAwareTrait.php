@@ -28,4 +28,16 @@ trait KeysAwareTrait
 
 		return $this->phraseAppKeys;
 	}
+
+	/**
+	 *
+	 * @param Keys $keys
+	 * @return self
+	 */
+	public function setPhraseAppKeys(Keys $keys)
+	{
+		$this->phraseAppKeys = $keys;
+
+		return $this;
+	}
 }

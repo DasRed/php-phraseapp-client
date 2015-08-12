@@ -28,4 +28,16 @@ trait LocalesAwareTrait
 
 		return $this->phraseAppLocales;
 	}
+
+	/**
+	 *
+	 * @param Locales $locales
+	 * @return self
+	 */
+	public function setPhraseAppLocales(Locales $locales)
+	{
+		$this->phraseAppLocales = $locales;
+
+		return $this;
+	}
 }

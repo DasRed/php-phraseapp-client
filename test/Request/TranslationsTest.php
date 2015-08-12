@@ -29,26 +29,9 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::fetch
 	 */
-	public function testFetch()
+	public function testFetchSuccess()
 	{
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['fetchAll', 'fetchForLocale'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('fetchAll')->with()->willReturn(['A']);
-		$translations->expects($this->never())->method('fetchForLocale');
-
-		$this->assertSame(['A'], $translations->fetch());
-
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['fetchAll', 'fetchForLocale'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->never())->method('fetchAll');
-		$translations->expects($this->once())->method('fetchForLocale')->with()->willReturn(['A']);
-
-		$this->assertSame(['A'], $translations->fetch('de-DE'));
-	}
-
-	/**
-	 * @covers ::fetchAll
-	 */
-	public function testFetchAllSuccess()
-	{
+		$this->markTestIncomplete();
 		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translations/')->willReturn([
 			'en-UK' => [
@@ -63,9 +46,6 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 			],
 		]);
 
-		$reflectionMethod = new \ReflectionMethod($translations, 'fetchAll');
-		$reflectionMethod->setAccessible(true);
-
 		$this->assertEquals([
 			'en-UK' => [
 				'nuff' => 'narf',
@@ -77,85 +57,15 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 				'nuff' => 'narf',
 				'lol' => 'rofl',
 			]
-		], $reflectionMethod->invoke($translations));
-	}
-
-	/**
-	 * @covers ::fetchAll
-	 */
-	public function testFetchAllFailed()
-	{
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodGet')->with('translations/')->willThrowException(new \DasRed\PhraseApp\Exception());
-
-		$reflectionMethod = new \ReflectionMethod($translations, 'fetchAll');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([], $reflectionMethod->invoke($translations));
-	}
-
-	/**
-	 * @covers ::fetchForLocale
-	 */
-	public function testFetchForLocaleSuccess()
-	{
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodGet')->with('translations/', ['locale_name' => 'de-DE'])->willReturn([
-			['translation_key' => ['name' => 'abc'], 'content' => 'def'],
-			['translation_key' => ['name' => 'nuff'], 'content' => 'narf'],
-			['translation_key' => ['name' => 'lol'], 'content' => 'rofl'],
-		]);
-
-		$reflectionMethod = new \ReflectionMethod($translations, 'fetchForLocale');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([
-			'abc' => 'def',
-			'nuff' => 'narf',
-			'lol' => 'rofl',
-		], $reflectionMethod->invoke($translations, 'de-DE'));
-	}
-
-	/**
-	 * @covers ::fetchForLocale
-	 */
-	public function testFetchForLocaleFailed()
-	{
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodGet')->with('translations/', ['locale_name' => 'de-DE'])->willThrowException(new \DasRed\PhraseApp\Exception());
-
-		$reflectionMethod = new \ReflectionMethod($translations, 'fetchForLocale');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([], $reflectionMethod->invoke($translations, 'de-DE'));
-	}
-
-	/**
-	 * @covers ::parse
-	 */
-	public function testParse()
-	{
-		$translations = new Translations($this->config);
-
-		$reflectionMethod = new \ReflectionMethod($translations, 'parse');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([
-			'abc' => 'def',
-			'nuff' => 'narf',
-			'lol' => 'rofl',
-		], $reflectionMethod->invoke($translations, [
-			['translation_key' => ['name' => 'abc'], 'content' => 'def'],
-			['translation_key' => ['name' => 'nuff'], 'content' => 'narf'],
-			['translation_key' => ['name' => 'lol'], 'content' => 'rofl'],
-		]));
+		], $translations->fetch());
 	}
 
 	/**
 	 * @covers ::store
 	 */
-	public function testStoreSuccess()
+	public function testStoreSuccessCreate()
 	{
+		$this->markTestIncomplete();
 		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
 			'locale' => 'de-DE',
@@ -169,8 +79,25 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::store
 	 */
-	public function testStoreFailed()
+	public function testStoreSuccessUpdate()
 	{
+		$this->markTestIncomplete();
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
+			'locale' => 'de-DE',
+			'key' => 'a/b/c/de.de',
+			'content' => 'mäh',
+		])->willReturn([]);
+
+		$this->assertTrue($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+	}
+
+	/**
+	 * @covers ::store
+	 */
+	public function testStoreFailedByLocale()
+	{
+		$this->markTestIncomplete();
 		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
 			'locale' => 'de-DE',
@@ -179,5 +106,73 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 		])->willThrowException(new \DasRed\PhraseApp\Exception());
 
 		$this->assertFalse($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+	}
+
+	/**
+	 * @covers ::store
+	 */
+	public function testStoreFailedByKey()
+	{
+		$this->markTestIncomplete();
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
+			'locale' => 'de-DE',
+			'key' => 'a/b/c/de.de',
+			'content' => 'mäh',
+		])->willThrowException(new \DasRed\PhraseApp\Exception());
+
+		$this->assertFalse($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+	}
+
+
+	public function testCreate()
+	{
+		$this->markTestIncomplete();
+	}
+
+	public function testUpdate()
+	{
+		$this->markTestIncomplete();
+	}
+
+	/**
+	 * @covers ::getIdKey
+	 */
+	public function testGetIdKey()
+	{
+		$translations = new Translations($this->config);
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'getIdKey');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertSame('id', $reflectionMethod->invoke($translations));
+	}
+
+	/**
+	 * @covers ::load
+	 */
+	public function testLoadSuccess()
+	{
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('methodGet')->with(Translations::URL_API)->willReturn([['id' => 'a'], ['id' => 'b']]);
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'load');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertEquals([['id' => 'a'], ['id' => 'b']], $reflectionMethod->invoke($translations));
+	}
+
+	/**
+	 * @covers ::load
+	 */
+	public function testLoadFailed()
+	{
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('methodGet')->with(Translations::URL_API)->willThrowException(new \DasRed\PhraseApp\Exception());
+
+		$reflectionMethod = new \ReflectionMethod($translations, 'load');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertEquals([], $reflectionMethod->invoke($translations));
 	}
 }

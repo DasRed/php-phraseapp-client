@@ -5,6 +5,7 @@ use DasRed\PhraseApp\Config;
 
 trait TranslationsAwareTrait
 {
+
 	/**
 	 *
 	 * @var Translations
@@ -17,6 +18,16 @@ trait TranslationsAwareTrait
 	abstract public function getConfig();
 
 	/**
+	 * @return Keys
+	 */
+	abstract function getPhraseAppKeys();
+
+	/**
+	 * @return Locales
+	 */
+	abstract function getPhraseAppLocales();
+
+	/**
 	 * @return Translations
 	 */
 	public function getPhraseAppTranslations()
@@ -24,8 +35,21 @@ trait TranslationsAwareTrait
 		if ($this->phraseAppTranslations === null)
 		{
 			$this->phraseAppTranslations = new Translations($this->getConfig());
+			$this->phraseAppTranslations->setPhraseAppKeys($this->getPhraseAppKeys())->setPhraseAppLocales($this->getPhraseAppLocales());
 		}
 
 		return $this->phraseAppTranslations;
+	}
+
+	/**
+	 *
+	 * @param Translations $translations
+	 * @return self
+	 */
+	public function setPhraseAppTranslations(Translations $translations)
+	{
+		$this->phraseAppTranslations = $translations;
+
+		return $this;
 	}
 }

@@ -156,9 +156,6 @@ class Request implements ConfigAwareInterface
 			switch ($method)
 			{
 				case self::METHOD_POST:
-					$client->setParameterPost($parameters);
-					break;
-
 				case self::METHOD_DELETE:
 				case self::METHOD_PUT:
 				case self::METHOD_PATCH:

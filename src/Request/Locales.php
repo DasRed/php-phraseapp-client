@@ -3,6 +3,7 @@ namespace DasRed\PhraseApp\Request;
 
 use DasRed\PhraseApp\Request;
 use DasRed\PhraseApp\Exception as BaseException;
+use DasRed\PhraseApp\Collection\SubArrayAwareTrait;
 
 /**
  *
@@ -10,22 +11,26 @@ use DasRed\PhraseApp\Exception as BaseException;
  */
 class Locales extends Request
 {
-	const URL_API = 'locales/';
+	use SubArrayAwareTrait;
+
+	const URL_API = 'projects/:project_id/locales/';
 
 	/**
 	 *
 	 * @param string $locale
 	 * @return boolean
+	 * @see http://docs.phraseapp.com/api/v2/locales/#create
 	 */
 	public function create($locale)
 	{
 		try
 		{
-			$this->methodPost(self::URL_API, [
-				'locale' => [
-					'name' => $locale
-				]
+			$result = $this->methodPost(self::URL_API, [
+				'name' => $locale,
+				'code' => $locale
 			]);
+
+			$this->getCollection()->append($result);
 		}
 		catch (BaseException $exception)
 		{
@@ -41,18 +46,35 @@ class Locales extends Request
 	 */
 	public function fetch()
 	{
+		return array_values($this->getCollection()->map(function ($entry)
+		{
+			return $entry['code'];
+		}));
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getIdKey()
+	{
+		return 'code';
+	}
+
+	/**
+	 * @return array
+	 * @see http://docs.phraseapp.com/api/v2/locales/#index
+	 */
+	protected function load()
+	{
 		try
 		{
 			$response = $this->methodGet(self::URL_API);
 		}
 		catch (BaseException $exception)
 		{
-			return [];
+			$response = [];
 		}
 
-		return array_map(function ($entry)
-		{
-			return $entry['code'];
-		}, $response);
+		return $response;
 	}
 }

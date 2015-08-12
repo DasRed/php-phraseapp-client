@@ -13,10 +13,12 @@ class LocalesAwareTraitTest extends \PHPUnit_Framework_TestCase
 
 	/**
 	 * @covers ::getPhraseAppLocales
+	 * @covers ::setPhraseAppLocales
 	 */
-	public function testGetSetConfig()
+	public function testGetSetPhraseAppLocales()
 	{
 		$config = new Config('pp', 'a', 'de');
+		$instanceOther = new Locales($config);
 
 		$trait = $this->getMockBuilder('\DasRed\PhraseApp\Request\LocalesAwareTrait')->setMethods(['getConfig'])->getMockForTrait();
 		$trait->expects($this->any())->method('getConfig')->willReturn($config);
@@ -25,5 +27,8 @@ class LocalesAwareTraitTest extends \PHPUnit_Framework_TestCase
 		$this->assertInstanceOf(Locales::class, $instance);
 		$this->assertSame($instance, $trait->getPhraseAppLocales());
 		$this->assertSame($config, $instance->getConfig());
+
+		$this->assertSame($trait, $trait->setPhraseAppLocales($instanceOther));
+		$this->assertSame($instanceOther, $trait->getPhraseAppLocales());
 	}
 }

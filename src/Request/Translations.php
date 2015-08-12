@@ -3,35 +3,83 @@ namespace DasRed\PhraseApp\Request;
 
 use DasRed\PhraseApp\Request;
 use DasRed\PhraseApp\Exception as BaseException;
+use DasRed\PhraseApp\Collection\SubArrayAwareTrait;
 
 /**
  *
  * @see http://docs.phraseapp.com/api/v2/translations/
  */
-class Translations extends Request
+class Translations extends Request implements KeysAwareInterface, LocalesAwareInterface
 {
-	const URL_API = 'translations/';
+	use KeysAwareTrait;
+	use LocalesAwareTrait;
+	use SubArrayAwareTrait;
+	const URL_API = 'projects/:project_id/translations/';
 
 	/**
 	 *
-	 * @param string $locale
-	 * @return array
+	 * @param string $localeId
+	 * @param string $keyId
+	 * @param string $content
+	 * @return bool
 	 */
-	public function fetch($locale = null)
+	protected function create($localeId, $keyId, $content)
 	{
-		if ($locale === null)
+		try
 		{
-			return $this->fetchAll();
+			$response = $this->methodPost(self::URL_API, [
+				'locale_id' => $localeId,
+				'key_id' => $keyId,
+				'content' => $content
+			]);
+
+			$this->getCollection()->append($response);
+		}
+		catch (BaseException $exception)
+		{
+			return false;
 		}
 
-		return $this->fetchForLocale($locale);
+		return true;
 	}
 
 	/**
 	 *
 	 * @return array
 	 */
-	protected function fetchAll()
+	public function fetch()
+	{
+		$result = [];
+		foreach ($this->getCollection() as $entry)
+		{
+			$locale = $entry['locale']['code'];
+			$key = $entry['locale']['name'];
+			$content = $entry['content'];
+
+			if (array_key_exists($locale, $result) === false)
+			{
+				$result[$locale] = [];
+			}
+
+			$result[$locale][$key] = $content;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getIdKey()
+	{
+		return 'id';
+	}
+
+	/**
+	 * @return array
+	 * @see http://docs.phraseapp.com/api/v2/translations/#index
+	 */
+	protected function load()
 	{
 		try
 		{
@@ -39,59 +87,10 @@ class Translations extends Request
 		}
 		catch (BaseException $exception)
 		{
-			return [];
+			$response = [];
 		}
 
-		$result = [];
-		foreach ($response as $locale => $responseLocaleEntry)
-		{
-			$result = array_merge($result, [
-				$locale => $this->parse($responseLocaleEntry)
-			]);
-		}
-
-		return $result;
-	}
-
-	/**
-	 *
-	 * @param string $locale
-	 * @return array
-	 */
-	protected function fetchForLocale($locale)
-	{
-		try
-		{
-			$response = $this->methodGet(self::URL_API, [
-				'locale_name' => $locale
-			]);
-		}
-		catch (BaseException $exception)
-		{
-			return [];
-		}
-
-		return $this->parse($response);
-	}
-
-	/**
-	 *
-	 * @param array $entries
-	 * @return array
-	 */
-	protected function parse(array $entries = array())
-	{
-		$result = [];
-
-		foreach ($entries as $entry)
-		{
-			$key = $entry['translation_key']['name'];
-			$content = $entry['content'];
-
-			$result[$key] = $content;
-		}
-
-		return $result;
+		return $response;
 	}
 
 	/**
@@ -103,13 +102,50 @@ class Translations extends Request
 	 */
 	public function store($locale, $key, $content)
 	{
+		// find locale
+		$locale = $this->getPhraseAppLocales()->getCollection()->get($locale);
+		if ($locale === null)
+		{
+			return false;
+		}
+
+		// find key
+		$key = $this->getPhraseAppKeys()->getCollection()->get($key);
+		if ($key === null)
+		{
+			return false;
+		}
+
+		// find the translation
+		$translation = $this->getCollection()->find(function (array $entry) use($locale, $key)
+		{
+			return $entry['locale']['id'] == $locale['id'] && $entry['key']['id'] == $key['id'];
+		});
+
+		// not found, create the content
+		if ($translation === null)
+		{
+			return $this->create($locale['id'], $key['id'], $content);
+		}
+
+		return $this->update($translation['id'], $content);
+	}
+
+	/**
+	 *
+	 * @param string $translationId
+	 * @param string $content
+	 * @return bool
+	 */
+	protected function update($translationId, $content)
+	{
 		try
 		{
-			$this->methodPost(self::URL_API . 'store', [
-				'locale' => $locale,
-				'key' => $key,
+			$response = $this->methodPatch(self::URL_API . $translationId, [
 				'content' => $content
 			]);
+
+			$this->getCollection()->append($response);
 		}
 		catch (BaseException $exception)
 		{
