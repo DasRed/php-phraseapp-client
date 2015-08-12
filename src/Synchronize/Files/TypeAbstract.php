@@ -81,6 +81,11 @@ abstract class TypeAbstract implements HandlerInterface
 			];
 		}
 
+		usort($result, function($fileA, $fileB)
+		{
+			return strcmp($fileA['file'], $fileB['file']);
+		});
+
 		return $result;
 	}
 
