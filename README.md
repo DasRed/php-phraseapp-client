@@ -79,4 +79,4 @@ $translator = new \DasRed\Translation\Translator('de-DE', __DIR__);
 // use
 $translator = new \DasRed\PhraseApp\Translator\PhraseApp('de-DE', __DIR__);
 ```
-and then do the rest of the [explanation from PhraseApp](http://docs.phraseapp.com/guides/in-context-editor/). The inline key prefix will be "{{__phrase_" and the suffix will be "__}}".
+and then do the rest of the [explanation from PhraseApp](http://docs.phraseapp.com/guides/in-context-editor/). The inline key prefix will be "{{\_\_phrase\_" and the suffix will be "\_\_}}".
