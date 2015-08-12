@@ -1,14 +1,15 @@
 <?php
-namespace DasRedTest\PhraseApp\Sessions;
+namespace DasRedTest\PhraseApp\Config;
 
-use DasRed\PhraseApp\Sessions\Exception;
+use DasRed\PhraseApp\Config\Exception;
 use DasRed\PhraseApp\Exception as ExceptionBase;
 
 /**
- * @coversDefaultClass \DasRed\PhraseApp\Sessions\Exception
+ * @coversDefaultClass \DasRed\PhraseApp\Config\Exception
  */
 class ExceptionTest extends \PHPUnit_Framework_TestCase
 {
+
 	public function testExtends()
 	{
 		$exception = new Exception();

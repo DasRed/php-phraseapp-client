@@ -7,8 +7,9 @@ use DasRed\PhraseApp\Request\Exception\HttpStatus;
 use Zend\Http\Client;
 use Zend\Http\Request as HttpRequest;
 
-class Request
+class Request implements ConfigAwareInterface
 {
+	use ConfigAwareTrait;
 
 	/**
 	 *
@@ -42,48 +43,17 @@ class Request
 
 	/**
 	 *
-	 * @var string
-	 */
-	protected $authToken;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $baseUrl;
-
-	/**
-	 *
 	 * @var Client
 	 */
 	protected $client;
 
 	/**
 	 *
-	 * @param string $baseUrl
-	 * @param string $authToken
+	 * @param Config $config
 	 */
-	public function __construct($baseUrl, $authToken)
+	public function __construct(Config $config)
 	{
-		$this->setBaseUrl($baseUrl)->setAuthToken($authToken);
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getAuthToken()
-	{
-		return $this->authToken;
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getBaseUrl()
-	{
-		return $this->baseUrl;
+		$this->setConfig($config);
 	}
 
 	/**
@@ -110,7 +80,7 @@ class Request
 	 * @param array $parameters
 	 * @return array
 	 */
-	protected function methodDelete($url, array $parameters = array())
+	protected function methodDelete($url, array $parameters = null)
 	{
 		return $this->request($url, self::METHOD_DELETE, $parameters);
 	}
@@ -121,7 +91,7 @@ class Request
 	 * @param array $parameters
 	 * @return array
 	 */
-	protected function methodGet($url, array $parameters = array())
+	protected function methodGet($url, array $parameters = null)
 	{
 		return $this->request($url, self::METHOD_GET, $parameters);
 	}
@@ -132,7 +102,7 @@ class Request
 	 * @param array $parameters
 	 * @return array
 	 */
-	protected function methodPatch($url, array $parameters = array())
+	protected function methodPatch($url, array $parameters = null)
 	{
 		return $this->request($url, self::METHOD_PATCH, $parameters);
 	}
@@ -143,7 +113,7 @@ class Request
 	 * @param array $parameters
 	 * @return array
 	 */
-	protected function methodPost($url, array $parameters = array())
+	protected function methodPost($url, array $parameters = null)
 	{
 		return $this->request($url, self::METHOD_POST, $parameters);
 	}
@@ -154,7 +124,7 @@ class Request
 	 * @param array $parameters
 	 * @return array
 	 */
-	protected function methodPut($url, array $parameters = array())
+	protected function methodPut($url, array $parameters = null)
 	{
 		return $this->request($url, self::METHOD_PUT, $parameters);
 	}
@@ -165,40 +135,40 @@ class Request
 	 * @param array $parameters
 	 * @throws RequestException
 	 */
-	protected function request($url, $method = self::METHOD_GET, array $parameters = array())
+	protected function request($url, $method = self::METHOD_GET, array $parameters = null)
 	{
-		$url = $this->getBaseUrl() . $url;
-		$parameters = array_merge([
-			'auth_token' => $this->getAuthToken(),
-			'project_auth_token' => $this->getAuthToken(),
-		], $parameters);
-
 		// request
 		$client = $this->getClient();
-		$client->reset()->setUri($url)->setMethod($method);
+		$client->reset()
+			->setUri($this->getConfig()->getBaseUrl() . $url)
+			->setMethod($method)
+			->getRequest()
+			->getHeaders()
+			->addHeaderLine('Content-Type', 'application/json')
+			->addHeaderLine('User-Agent', $this->getConfig()->getApplicationName())
+			->addHeaderLine('Authorization', 'token ' . $this->getConfig()->getAccessToken());
 
 		// set parameters by request
-		switch ($method)
+		if ($parameters !== null)
 		{
-			case self::METHOD_POST:
-				$client->setParameterPost($parameters);
-				break;
+			switch ($method)
+			{
+				case self::METHOD_POST:
+					$client->setParameterPost($parameters);
+					break;
 
-			case self::METHOD_DELETE:
-			case self::METHOD_PUT:
-			case self::METHOD_PATCH:
-				$jsonParameters = json_encode($parameters);
-				$client->setRawBody($jsonParameters)
-					->getRequest()
-					->getHeaders()
-					->addHeaderLine('Content-Type', 'application/json')
-					->addHeaderLine('Content-Length', strlen($jsonParameters));
-				break;
+				case self::METHOD_DELETE:
+				case self::METHOD_PUT:
+				case self::METHOD_PATCH:
+					$jsonParameters = json_encode($parameters);
+					$client->setRawBody($jsonParameters)->getRequest()->getHeaders()->addHeaderLine('Content-Length', strlen($jsonParameters));
+					break;
 
-			case self::METHOD_GET:
-			default:
-				$client->setParameterGet($parameters);
-				break;
+				case self::METHOD_GET:
+				default:
+					$client->setParameterGet($parameters);
+					break;
+			}
 		}
 
 		try
@@ -227,29 +197,5 @@ class Request
 		}
 
 		return $result;
-	}
-
-	/**
-	 *
-	 * @param string $authToken
-	 * @return self
-	 */
-	protected function setAuthToken($authToken)
-	{
-		$this->authToken = $authToken;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $baseUrl
-	 * @return self
-	 */
-	protected function setBaseUrl($baseUrl)
-	{
-		$this->baseUrl = rtrim($baseUrl, '/') . '/';
-
-		return $this;
 	}
 }

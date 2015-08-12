@@ -1,13 +1,31 @@
 <?php
-namespace DasRedTest\PhraseApp;
+namespace DasRedTest\PhraseApp\Request;
 
-use DasRed\PhraseApp\TranslationKeys;
+use DasRed\PhraseApp\Request\Keys;
+use DasRed\PhraseApp\Config;
+
 /**
  *
- * @coversDefaultClass \DasRed\PhraseApp\TranslationKeys
+ * @coversDefaultClass \DasRed\PhraseApp\Request\Keys
  */
-class TranslationKeysTest extends \PHPUnit_Framework_TestCase
+class KeysTest extends \PHPUnit_Framework_TestCase
 {
+	protected $config;
+
+	public function setUp()
+	{
+		parent::setUp();
+
+		$this->config = new Config('b', 'de', 'appName', 'a');
+	}
+
+	public function tearDown()
+	{
+		parent::tearDown();
+
+		$this->config = null;
+	}
+
 	public function dataProviderAddTag()
 	{
 		return [
@@ -23,7 +41,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testAddTagSuccess($key, $tag, $get, $id, $trKey)
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('get')->with($key)->willReturn($get);
 		$translations->expects($this->once())->method('getSessionToken')->with()->willReturn('getSessionToken');
 		$translations->expects($this->once())->method('methodPatch')->with('translation_keys/' . $id, [
@@ -39,7 +57,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testAddTagFailed()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('get')->willReturn(['id' => 1]);
 		$translations->expects($this->once())->method('getSessionToken')->willReturn('getSessionToken');
 		$translations->expects($this->once())->method('methodPatch')->willThrowException(new \DasRed\PhraseApp\Exception());
@@ -52,7 +70,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testCreateSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodPost', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodPost', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('getSessionToken')->with()->willReturn('getSessionToken');
 		$translations->expects($this->once())->method('methodPost')->with('translation_keys/', [
 			'auth_token' => 'getSessionToken',
@@ -72,7 +90,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testCreateFailed()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodPost', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodPost', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('getSessionToken')->with()->willReturn('getSessionToken');
 		$translations->expects($this->once())->method('methodPost')->with('translation_keys/', [
 			'auth_token' => 'getSessionToken',
@@ -92,7 +110,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteWithMany()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('deleteMany')->with(['a', 'b'])->willReturn(true);
 		$translations->expects($this->never())->method('getId');
 		$translations->expects($this->never())->method('methodDelete');
@@ -106,7 +124,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteOnlyOneSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->never())->method('deleteMany');
 		$translations->expects($this->once())->method('getId')->with('abc.def')->willReturn(1);
 		$translations->expects($this->once())->method('methodDelete')->with('translation_keys/1', [
@@ -122,7 +140,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteOnlyOneFailedByResultSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->never())->method('deleteMany');
 		$translations->expects($this->once())->method('getId')->with('abc.def')->willReturn(1);
 		$translations->expects($this->once())->method('methodDelete')->with('translation_keys/1', [
@@ -138,7 +156,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteOnlyOneFailedByException()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->never())->method('deleteMany');
 		$translations->expects($this->once())->method('getId')->with('abc.def')->willReturn(1);
 		$translations->expects($this->once())->method('methodDelete')->with('translation_keys/1', [
@@ -154,7 +172,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteNotExists()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['deleteMany', 'getId', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->never())->method('deleteMany');
 		$translations->expects($this->once())->method('getId')->with('abc.def')->willReturn(false);
 		$translations->expects($this->never())->method('methodDelete');
@@ -168,7 +186,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteManySuccessByEmptyCount()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('fetchIds')->with(['a', 'b'])->willReturn([]);
 		$translations->expects($this->never())->method('methodDelete');
 		$translations->expects($this->never())->method('getSessionToken');
@@ -184,7 +202,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteManyFailedByException()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('fetchIds')->with(['a', 'b'])->willReturn([1]);
 		$translations->expects($this->once())->method('methodDelete')->with('translation_keys/destroy_multiple', [
 			'ids' => [1],
@@ -203,7 +221,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteManyFailedByResultSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('fetchIds')->with(['a', 'b'])->willReturn([1]);
 		$translations->expects($this->once())->method('methodDelete')->with('translation_keys/destroy_multiple', [
 			'ids' => [1],
@@ -222,7 +240,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testDeleteManySuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['fetchIds', 'methodDelete', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('fetchIds')->with(['a', 'b'])->willReturn([1]);
 		$translations->expects($this->once())->method('methodDelete')->with('translation_keys/destroy_multiple', [
 			'ids' => [1],
@@ -241,7 +259,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testFetchSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/')->willReturn([
 			['name' => 'abc'],
 			['name' => 'a/b/c'],
@@ -255,7 +273,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testFetchFailed()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/')->willThrowException(new \DasRed\PhraseApp\Exception());
 
 		$this->assertEquals([], $translations->fetch());
@@ -266,7 +284,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testFetchIdsSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/', [
 			'key_names' => ['a', 'a/b/c']
 		])->willReturn([
@@ -285,7 +303,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testFetchIdsFailed()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/', [
 			'key_names' => ['a', 'a/b/c']
 		])->willThrowException(new \DasRed\PhraseApp\Exception());
@@ -301,7 +319,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetSuccess()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/', [
 			'key_names' => ['a/b/c']
 		])->willReturn([
@@ -319,7 +337,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetFailedByException()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/', [
 			'key_names' => ['a/b/c']
 		])->willThrowException(new \DasRed\PhraseApp\Exception());
@@ -335,7 +353,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetFailedByResult()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/', [
 			'key_names' => ['a/b/c']
 		])->willReturn([]);
@@ -351,7 +369,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetId()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['methodGet'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('methodGet')->with('translation_keys/', [
 			'key_names' => ['a/b/c']
 		])->willReturn([
@@ -385,7 +403,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testUpdateSuccess($key, $name, $description, $tags, $dataType, $id, $get, $trKey)
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('get')->with($key)->willReturn($get);
 		$translations->expects($this->once())->method('getSessionToken')->with()->willReturn('getSessionToken');
 		$translations->expects($this->once())->method('methodPatch')->with('translation_keys/' . $id, [
@@ -401,7 +419,7 @@ class TranslationKeysTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testUpdateFailed()
 	{
-		$translations = $this->getMockBuilder(TranslationKeys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->disableOriginalConstructor()->getMock();
+		$translations = $this->getMockBuilder(Keys::class)->setMethods(['get', 'methodPatch', 'getSessionToken'])->setConstructorArgs([$this->config])->getMock();
 		$translations->expects($this->once())->method('get')->willReturn(['id' => 1]);
 		$translations->expects($this->once())->method('getSessionToken')->willReturn('getSessionToken');
 		$translations->expects($this->once())->method('methodPatch')->willThrowException(new \DasRed\PhraseApp\Exception());

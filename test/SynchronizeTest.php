@@ -3,22 +3,24 @@ namespace DasRedTest\PhraseApp;
 
 use DasRed\PhraseApp\Synchronize;
 use Zend\Log\Logger;
-use DasRed\PhraseApp\Synchronize\Exception\InvalidPreferDirection;
-use DasRed\PhraseApp\Locales;
-use DasRed\PhraseApp\TranslationKeys;
-use DasRed\PhraseApp\Translations;
+use DasRed\PhraseApp\Request\Locales;
+use DasRed\PhraseApp\Request\Keys;
+use DasRed\PhraseApp\Request\Translations;
 use Zend\Log\Writer\Mock;
 use DasRed\PhraseApp\Synchronize\Exception\FailureAddLocale;
 use DasRed\PhraseApp\Synchronize\Exception\FailureAddKey;
 use DasRed\PhraseApp\Synchronize\Exception\FailureDeleteKey;
 use DasRed\PhraseApp\Synchronize\Exception\FailureStoreContentByTag;
 use DasRed\PhraseApp\Synchronize\Exception\FailureStoreContent;
+use DasRed\PhraseApp\Config;
 
 /**
  * @coversDefaultClass \DasRed\PhraseApp\Synchronize
  */
 class SynchronizeTest extends \PHPUnit_Framework_TestCase
 {
+	protected $config;
+
 	protected $logger;
 
 	protected $writer;
@@ -27,6 +29,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	{
 		parent::setUp();
 
+		$this->config = new Config('b', 'de', 'appName', 'a');
 		$this->logger = new Logger();
 		$this->writer = new Mock();
 		$this->logger->addWriter($this->writer);
@@ -36,6 +39,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	{
 		parent::tearDown();
 
+		$this->config = null;
 		$this->logger = null;
 		$this->writer = null;
 	}
@@ -45,14 +49,10 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testConstruct()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$this->assertSame($this->logger, $sync->getLogger());
-		$this->assertSame('a', $sync->getBaseUrl());
-		$this->assertSame('b', $sync->getAuthToken());
-		$this->assertSame('c', $sync->getUserEmail());
-		$this->assertSame('d', $sync->getUserPassword());
-		$this->assertSame('e', $sync->getLocaleDefault());
+		$this->assertSame($this->config, $sync->getConfig());
 	}
 
 	/**
@@ -60,7 +60,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testAddTranslation()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$this->assertSame($sync, $sync->addTranslation('de', 'a', 'c'));
 		$this->assertEquals(['de' => ['a' => 'c']], $sync->getTranslations());
@@ -77,7 +77,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testAddTranslations()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$this->assertSame($sync, $sync->addTranslations('de', ['a' => 'c']));
 		$this->assertEquals(['de' => ['a' => 'c']], $sync->getTranslations());
@@ -90,175 +90,11 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getAuthToken
-	 * @covers ::setAuthToken
-	 */
-	public function testGetSetAuthToken()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'setAuthToken');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertSame('b', $sync->getAuthToken());
-		$this->assertSame($sync, $reflectionMethod->invoke($sync, 'nuff'));
-		$this->assertSame('nuff', $sync->getAuthToken());
-	}
-
-	/**
-	 * @covers ::getBaseUrl
-	 * @covers ::setBaseUrl
-	 */
-	public function testGetSetBaseUrl()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'setBaseUrl');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertSame('a', $sync->getBaseUrl());
-		$this->assertSame($sync, $reflectionMethod->invoke($sync, 'nuff'));
-		$this->assertSame('nuff', $sync->getBaseUrl());
-	}
-
-	/**
-	 * @covers ::getLogger
-	 * @covers ::setLogger
-	 */
-	public function testGetSetLogger()
-	{
-		$logger = new Logger();
-
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'setLogger');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertSame($this->logger, $sync->getLogger());
-		$this->assertSame($sync, $reflectionMethod->invoke($sync, $logger));
-		$this->assertSame($logger, $sync->getLogger());
-	}
-
-	/**
-	 * @covers ::getLocaleDefault
-	 * @covers ::setLocaleDefault
-	 */
-	public function testGetSetLocaleDefault()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'setLocaleDefault');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertSame('e', $sync->getLocaleDefault());
-		$this->assertSame($sync, $reflectionMethod->invoke($sync, 'nuff'));
-		$this->assertSame('nuff', $sync->getLocaleDefault());
-	}
-
-	/**
-	 * @covers ::getPhraseLocales
-	 */
-	public function testGetPhraseLocales()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'getPhraseLocales');
-		$reflectionMethod->setAccessible(true);
-
-		$client = $reflectionMethod->invoke($sync);
-
-		$this->assertInstanceOf(Locales::class, $client);
-		$this->assertSame($client, $reflectionMethod->invoke($sync));
-		$this->assertSame('a/', $client->getBaseUrl());
-		$this->assertSame('b', $client->getAuthToken());
-	}
-
-	/**
-	 * @covers ::getPhraseTranslations
-	 */
-	public function testGetPhraseTranslations()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'getPhraseTranslations');
-		$reflectionMethod->setAccessible(true);
-
-		$client = $reflectionMethod->invoke($sync);
-
-		$this->assertInstanceOf(Translations::class, $client);
-		$this->assertSame($client, $reflectionMethod->invoke($sync));
-		$this->assertSame('a/', $client->getBaseUrl());
-		$this->assertSame('b', $client->getAuthToken());
-	}
-
-	/**
-	 * @covers ::getPhraseTranslationKeys
-	 */
-	public function testGetPhraseTranslationKeys()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'getPhraseTranslationKeys');
-		$reflectionMethod->setAccessible(true);
-
-		$client = $reflectionMethod->invoke($sync);
-
-		$this->assertInstanceOf(TranslationKeys::class, $client);
-		$this->assertSame($client, $reflectionMethod->invoke($sync));
-		$this->assertSame('a/', $client->getBaseUrl());
-		$this->assertSame('b', $client->getAuthToken());
-		$this->assertSame('c', $client->getUserEmail());
-		$this->assertSame('d', $client->getUserPassword());
-	}
-
-	/**
-	 * @covers ::getPreferDirection
-	 * @covers ::setPreferDirection
-	 */
-	public function testGetSetPreferDirectionSuccess()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$this->assertSame(Synchronize::PREFER_REMOTE, $sync->getPreferDirection());
-		$this->assertSame($sync, $sync->setPreferDirection(Synchronize::PREFER_LOCAL));
-		$this->assertSame(Synchronize::PREFER_LOCAL, $sync->getPreferDirection());
-		$this->assertSame($sync, $sync->setPreferDirection(Synchronize::PREFER_REMOTE));
-		$this->assertSame(Synchronize::PREFER_REMOTE, $sync->getPreferDirection());
-	}
-
-	/**
-	 * @covers ::getPreferDirection
-	 * @covers ::setPreferDirection
-	 */
-	public function testGetSetPreferDirectionFailed()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$this->setExpectedException(InvalidPreferDirection::class);
-		$sync->setPreferDirection('nuff');
-	}
-
-	/**
-	 * @covers ::getTagForContentChangeFromLocalToRemote
-	 * @covers ::setTagForContentChangeFromLocalToRemote
-	 */
-	public function testGetSetTagForContentChangeFromLocalToRemote()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$this->assertNull($sync->getTagForContentChangeFromLocalToRemote());
-		$this->assertSame($sync, $sync->setTagForContentChangeFromLocalToRemote('nuff'));
-		$this->assertSame('nuff', $sync->getTagForContentChangeFromLocalToRemote());
-		$this->assertSame($sync, $sync->setTagForContentChangeFromLocalToRemote('narf'));
-		$this->assertSame('narf', $sync->getTagForContentChangeFromLocalToRemote());
-	}
-
-	/**
 	 * @covers ::getTranslation
 	 */
 	public function testGetTranslation()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$this->assertNull($sync->getTranslation('de', 'a'));
 		$sync->addTranslation('de', 'a', 'c');
@@ -271,7 +107,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetTranslationLocales()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'de');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'getTranslationLocales');
 		$reflectionMethod->setAccessible(true);
@@ -286,13 +122,13 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getTranslationKeys
+	 * @covers ::getKeys
 	 */
-	public function testGetTranslationKeys()
+	public function testGetKeys()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'de');
+		$sync = new Synchronize($this->logger, $this->config);
 
-		$reflectionMethod = new \ReflectionMethod($sync, 'getTranslationKeys');
+		$reflectionMethod = new \ReflectionMethod($sync, 'getKeys');
 		$reflectionMethod->setAccessible(true);
 
 		$this->assertEquals([], $reflectionMethod->invoke($sync));
@@ -312,7 +148,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testGetTranslations()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'de');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$this->assertEquals([], $sync->getTranslations());
 		$this->assertEquals([], $sync->getTranslations('de'));
@@ -326,43 +162,11 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getUserEmail
-	 * @covers ::setUserEmail
-	 */
-	public function testGetSetUserEmail()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'setUserEmail');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertSame('c', $sync->getUserEmail());
-		$this->assertSame($sync, $reflectionMethod->invoke($sync, 'nuff'));
-		$this->assertSame('nuff', $sync->getUserEmail());
-	}
-
-	/**
-	 * @covers ::getUserPassword
-	 * @covers ::setUserPassword
-	 */
-	public function testGetSetUserPassword()
-	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'e');
-
-		$reflectionMethod = new \ReflectionMethod($sync, 'setUserPassword');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertSame('d', $sync->getUserPassword());
-		$this->assertSame($sync, $reflectionMethod->invoke($sync, 'nuff'));
-		$this->assertSame('nuff', $sync->getUserPassword());
-	}
-
-	/**
 	 * @covers ::removeTranslationKeyFromAllLocales
 	 */
 	public function testRemoveTranslationKeyFromAllLocales()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'de');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'removeTranslationKeyFromAllLocales');
 		$reflectionMethod->setAccessible(true);
@@ -398,7 +202,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSynchronizeSuccess()
 	{
-		$builder = $this->getMockBuilder(Synchronize::class)->setMethods(['synchronizeLocales', 'synchronizeKeys', 'synchronizeCleanUpKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de']);
+		$builder = $this->getMockBuilder(Synchronize::class)->setMethods(['synchronizeLocales', 'synchronizeKeys', 'synchronizeCleanUpKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config]);
 
 		$syncA = $builder->getMock();
 		$syncB = $builder->getMock();
@@ -433,7 +237,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSynchronizeFailed()
 	{
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 
 		$sync->expects($this->once())->method('synchronizeLocales')->with()->willThrowException(new \DasRed\PhraseApp\Exception());
 		$sync->expects($this->never())->method('synchronizeKeys');
@@ -448,7 +252,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSynchronizeCleanUpKeys()
 	{
-		$sync = new Synchronize($this->logger, 'a', 'b', 'c', 'd', 'de');
+		$sync = new Synchronize($this->logger, $this->config);
 
 		$sync->addTranslations('fr', ['a' => '1', 'b' => '2', 'fr' => '2']);
 		$sync->addTranslations('en', ['a' => '1', 'b' => '2', 'en' => '3']);
@@ -483,18 +287,19 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$phraseTranslations->expects($this->once())->method('fetch')->with()->willReturn($remote);
 		$phraseTranslations->expects($this->once())->method('store')->with('de', 'nuff', 'de.locale.nuff')->willReturn(true);
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['addTag'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('addTag')->with('nuff', 'newContent')->willReturn(true);
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['addTag'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('addTag')->with('nuff', 'newContent')->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseTranslationKeys'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseKeys'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->exactly(2))->method('getPhraseTranslations')->with()->willReturn($phraseTranslations);
-		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->once())->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 
 		foreach ($local as $locale => $keys)
 		{
 			$sync->addTranslations($locale, $keys);
 		}
-		$sync->setPreferDirection(Synchronize::PREFER_REMOTE)->setTagForContentChangeFromLocalToRemote('newContent');
+
+		$this->config->setPreferDirection(Config::PREFER_REMOTE)->setTagForContentChangeFromLocalToRemote('newContent');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeContent');
 		$reflectionMethod->setAccessible(true);
@@ -525,15 +330,16 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$phraseTranslations->expects($this->once())->method('fetch')->with()->willReturn($remote);
 		$phraseTranslations->expects($this->once())->method('store')->with('de', 'nuff', 'de.locale.nuff')->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseTranslationKeys'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseKeys'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->exactly(2))->method('getPhraseTranslations')->with()->willReturn($phraseTranslations);
-		$sync->expects($this->never())->method('getPhraseTranslationKeys');
+		$sync->expects($this->never())->method('getPhraseKeys');
 
 		foreach ($local as $locale => $keys)
 		{
 			$sync->addTranslations($locale, $keys);
 		}
-		$sync->setPreferDirection(Synchronize::PREFER_REMOTE);
+
+		$this->config->setPreferDirection(Config::PREFER_REMOTE);
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeContent');
 		$reflectionMethod->setAccessible(true);
@@ -573,14 +379,15 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 			['fr', 'fr', 'fr.locale.2']
 		)->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->exactly(8))->method('getPhraseTranslations')->with()->willReturn($phraseTranslations);
 
 		foreach ($local as $locale => $keys)
 		{
 			$sync->addTranslations($locale, $keys);
 		}
-		$sync->setPreferDirection(Synchronize::PREFER_LOCAL);
+
+		$this->config->setPreferDirection(Config::PREFER_LOCAL);
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeContent');
 		$reflectionMethod->setAccessible(true);
@@ -611,18 +418,19 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$phraseTranslations->expects($this->once())->method('fetch')->with()->willReturn($remote);
 		$phraseTranslations->expects($this->never())->method('store');
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['addTag'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('addTag')->with('nuff', 'newContent')->willReturn(false);
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['addTag'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('addTag')->with('nuff', 'newContent')->willReturn(false);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseTranslationKeys'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseKeys'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getPhraseTranslations')->with()->willReturn($phraseTranslations);
-		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->once())->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 
 		foreach ($local as $locale => $keys)
 		{
 			$sync->addTranslations($locale, $keys);
 		}
-		$sync->setPreferDirection(Synchronize::PREFER_REMOTE)->setTagForContentChangeFromLocalToRemote('newContent');
+
+		$this->config->setPreferDirection(Config::PREFER_REMOTE)->setTagForContentChangeFromLocalToRemote('newContent');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeContent');
 		$reflectionMethod->setAccessible(true);
@@ -650,18 +458,19 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$phraseTranslations->expects($this->once())->method('fetch')->with()->willReturn($remote);
 		$phraseTranslations->expects($this->once())->method('store')->with('de', 'nuff', 'de.locale.nuff')->willReturn(false);
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['addTag'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('addTag')->with('nuff', 'newContent')->willReturn(true);
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['addTag'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('addTag')->with('nuff', 'newContent')->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseTranslationKeys'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslations', 'getPhraseKeys'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->exactly(2))->method('getPhraseTranslations')->with()->willReturn($phraseTranslations);
-		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->once())->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 
 		foreach ($local as $locale => $keys)
 		{
 			$sync->addTranslations($locale, $keys);
 		}
-		$sync->setPreferDirection(Synchronize::PREFER_REMOTE)->setTagForContentChangeFromLocalToRemote('newContent');
+
+		$this->config->setPreferDirection(Config::PREFER_REMOTE)->setTagForContentChangeFromLocalToRemote('newContent');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeContent');
 		$reflectionMethod->setAccessible(true);
@@ -678,14 +487,14 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
 		$keysRemote = ['b', 'de', 'nuff', 'narf'];
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
-		$phraseTranslationKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
-		$phraseTranslationKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
+		$phraseKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
-		$sync->expects($this->exactly(5))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(5))->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->exactly(2))->method('removeTranslationKeyFromAllLocales')->withConsecutive(['nuff'], ['narf'])->willReturnSelf();
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
@@ -702,14 +511,14 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$keysLocal = ['b' => '2', 'de' => '4'];
 		$keysRemote = ['b', 'de', 'nuff', 'narf'];
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
-		$phraseTranslationKeys->expects($this->never())->method('create');
-		$phraseTranslationKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseKeys->expects($this->never())->method('create');
+		$phraseKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
-		$sync->expects($this->exactly(3))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(3))->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->exactly(2))->method('removeTranslationKeyFromAllLocales')->withConsecutive(['nuff'], ['narf'])->willReturnSelf();
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
@@ -726,14 +535,14 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
 		$keysRemote = ['b', 'de'];
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
-		$phraseTranslationKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
-		$phraseTranslationKeys->expects($this->never())->method('delete');
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
+		$phraseKeys->expects($this->never())->method('delete');
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
-		$sync->expects($this->exactly(3))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(3))->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
@@ -750,14 +559,14 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$keysLocal = ['b' => '2', 'de' => '4'];
 		$keysRemote = ['b', 'de'];
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
-		$phraseTranslationKeys->expects($this->never())->method('create');
-		$phraseTranslationKeys->expects($this->never())->method('delete');
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseKeys->expects($this->never())->method('create');
+		$phraseKeys->expects($this->never())->method('delete');
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
-		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->once())->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
@@ -774,14 +583,14 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
 		$keysRemote = ['b', 'de', 'nuff', 'narf'];
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
-		$phraseTranslationKeys->expects($this->once())->method('create')->with('en')->willReturn(false);
-		$phraseTranslationKeys->expects($this->never())->method('delete');
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseKeys->expects($this->once())->method('create')->with('en')->willReturn(false);
+		$phraseKeys->expects($this->never())->method('delete');
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
-		$sync->expects($this->exactly(2))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(2))->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
@@ -799,14 +608,14 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
 		$keysRemote = ['b', 'de', 'nuff', 'narf'];
 
-		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
-		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
-		$phraseTranslationKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
-		$phraseTranslationKeys->expects($this->once())->method('delete')->with('nuff')->willReturn(false);
+		$phraseKeys = $this->getMockBuilder(Keys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
+		$phraseKeys->expects($this->once())->method('delete')->with('nuff')->willReturn(false);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslations', 'getPhraseKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
-		$sync->expects($this->exactly(4))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(4))->method('getPhraseKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
@@ -830,7 +639,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$phraseLocales->expects($this->once())->method('fetch')->with()->willReturn($localesRemote);
 		$phraseLocales->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['ru'])->willReturn(true);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseLocales', 'getTranslations'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseLocales', 'getTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
 		$sync->expects($this->exactly(3))->method('getPhraseLocales')->with()->willReturn($phraseLocales);
 		$sync->expects($this->once())->method('getTranslations')->with('de')->willReturn($translations);
@@ -862,7 +671,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$phraseLocales->expects($this->once())->method('fetch')->with()->willReturn($localesRemote);
 		$phraseLocales->expects($this->once())->method('create')->withConsecutive(['en'], ['ru'])->willReturn(false);
 
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseLocales', 'getTranslations'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseLocales', 'getTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
 		$sync->expects($this->exactly(2))->method('getPhraseLocales')->with()->willReturn($phraseLocales);
 		$sync->expects($this->never())->method('getTranslations');

@@ -1,11 +1,11 @@
 <?php
-namespace DasRedTest\PhraseApp\Synchronize\Exception;
+namespace DasRedTest\PhraseApp\Config\Exception;
 
-use DasRed\PhraseApp\Synchronize\Exception\InvalidPreferDirection;
-use DasRed\PhraseApp\Synchronize\Exception;
+use DasRed\PhraseApp\Config\Exception\InvalidPreferDirection;
+use DasRed\PhraseApp\Config\Exception;
 
 /**
- * @coversDefaultClass \DasRed\PhraseApp\Synchronize\Exception\InvalidPreferDirection
+ * @coversDefaultClass \DasRed\PhraseApp\Config\Exception\InvalidPreferDirection
  */
 class InvalidPreferDirectionTest extends \PHPUnit_Framework_TestCase
 {
@@ -22,6 +22,6 @@ class InvalidPreferDirectionTest extends \PHPUnit_Framework_TestCase
 	{
 		$exception = new InvalidPreferDirection('nuff');
 
-		$this->assertEquals('Unknown prefer direction "nuff" for synchronize', $exception->getMessage());
+		$this->assertEquals('Unknown prefer direction "nuff".', $exception->getMessage());
 	}
 }

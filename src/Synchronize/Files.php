@@ -86,7 +86,7 @@ class Files extends Synchronize
 		$tags = array_unique($tags, SORT_NATURAL);
 		sort($tags, SORT_NATURAL);
 
-		return $this->getPhraseTranslationKeys()->create($key, $description, $tags);
+		return $this->getPhraseKeys()->create($key, $description, $tags);
 	}
 
 	/**

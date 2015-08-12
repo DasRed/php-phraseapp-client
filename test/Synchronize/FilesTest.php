@@ -4,19 +4,23 @@ namespace DasRedTest\PhraseApp\Synchronize;
 use DasRed\PhraseApp\Synchronize\Files;
 use DasRed\PhraseApp\Synchronize\Files\HandlerInterface;
 use Zend\Log\Logger;
-use DasRed\PhraseApp\TranslationKeys;
+use DasRed\PhraseApp\Request\Keys;
+use DasRed\PhraseApp\Config;
 
 /**
  * @coversDefaultClass \DasRed\PhraseApp\Synchronize\Files
  */
 class FilesTest extends \PHPUnit_Framework_TestCase
 {
+	protected $config;
+
 	protected $logger;
 
 	public function setUp()
 	{
 		parent::setUp();
 
+		$this->config = new Config('b', 'de', 'appName', 'a');
 		$this->logger = $this->getMockBuilder(Logger::class)->disableOriginalConstructor()->getMock();
 	}
 
@@ -24,6 +28,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	{
 		parent::tearDown();
 
+		$this->config = null;
 		$this->logger = null;
 	}
 
@@ -35,7 +40,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$handlerA = $this->getMockBuilder(HandlerInterface::class)->getMockForAbstractClass();
 		$handlerB = $this->getMockBuilder(HandlerInterface::class)->getMockForAbstractClass();
 
-		$files = new Files($this->logger, '', '', '', '', '');
+		$files = new Files($this->logger, $this->config);
 
 		$reflectionProperty = new \ReflectionProperty($files, 'handlers');
 		$reflectionProperty->setAccessible(true);
@@ -65,7 +70,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	{
 		$callOrder = [];
 
-		$files = new Files($this->logger, '', '', '', '', '');
+		$files = new Files($this->logger, $this->config);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['read']);
 		$handlerA = $builder->getMockForAbstractClass();
@@ -104,7 +109,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSynchronizeSuccess()
 	{
-		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->disableOriginalConstructor()->getMock();
+		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$files->expects($this->once())->method('read')->with()->willReturnSelf();
 		$files->expects($this->once())->method('write')->with()->willReturnSelf();
 		$files->expects($this->any())->method('synchronizeLocales')->willReturnSelf();
@@ -119,7 +124,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSynchronizeFailed()
 	{
-		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->disableOriginalConstructor()->getMock();
+		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$files->expects($this->once())->method('read')->with()->willReturnSelf();
 		$files->expects($this->never())->method('write')->with()->willReturnSelf();
 		$files->expects($this->any())->method('synchronizeLocales')->willThrowException(new \DasRed\PhraseApp\Exception());
@@ -137,15 +142,15 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$key = 'abc.def';
 		$callOrder = [];
 
-		$translationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['create'])->disableOriginalConstructor()->getMock();
+		$translationKeys = $this->getMockBuilder(Keys::class)->setMethods(['create'])->disableOriginalConstructor()->getMock();
 		$translationKeys->expects($this->once())->method('create')->with(
 			$this->identicalTo($key),
 			$this->identicalTo('ABb'),
 			['A', 'Z', 'Z1', 'Z2', 'Z10', 'Z12', 'z']
 		)->willReturn(true);
 
-		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseTranslationKeys'])->disableOriginalConstructor()->getMock();
-		$files->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($translationKeys);
+		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseKeys'])->disableOriginalConstructor()->getMock();
+		$files->expects($this->once())->method('getPhraseKeys')->with()->willReturn($translationKeys);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey', 'getTagsForKey']);
 
@@ -201,7 +206,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	{
 		$callOrder = [];
 
-		$files = new Files($this->logger, '', '', '', '', '');
+		$files = new Files($this->logger, $this->config);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['write']);
 		$handlerA = $builder->getMockForAbstractClass();

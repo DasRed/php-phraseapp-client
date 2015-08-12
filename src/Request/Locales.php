@@ -1,13 +1,15 @@
 <?php
-namespace DasRed\PhraseApp;
+namespace DasRed\PhraseApp\Request;
+
+use DasRed\PhraseApp\Request;
+use DasRed\PhraseApp\Exception as BaseException;
 
 /**
  *
- * @see https://phraseapp.com/docs/api/locales?language=en
+ * @see http://docs.phraseapp.com/api/v2/locales/
  */
 class Locales extends Request
 {
-
 	const URL_API = 'locales/';
 
 	/**
@@ -25,7 +27,7 @@ class Locales extends Request
 				]
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}
@@ -43,7 +45,7 @@ class Locales extends Request
 		{
 			$response = $this->methodGet(self::URL_API);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return [];
 		}

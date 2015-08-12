@@ -1,13 +1,15 @@
 <?php
-namespace DasRed\PhraseApp;
+namespace DasRed\PhraseApp\Request;
+
+use DasRed\PhraseApp\Request;
+use DasRed\PhraseApp\Exception as BaseException;
 
 /**
  *
- * @see https://phraseapp.com/docs/api/translation_keys?language=en
+ * @see http://docs.phraseapp.com/api/v2/keys/
  */
-class TranslationKeys extends Sessions
+class Keys extends Request
 {
-
 	const URL_API = 'translation_keys/';
 
 	/**
@@ -37,7 +39,7 @@ class TranslationKeys extends Sessions
 				'translation_key' => $translationKey
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}
@@ -68,7 +70,7 @@ class TranslationKeys extends Sessions
 				]
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}
@@ -100,7 +102,7 @@ class TranslationKeys extends Sessions
 				'auth_token' => $this->getSessionToken()
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}
@@ -133,7 +135,7 @@ class TranslationKeys extends Sessions
 				'auth_token' => $this->getSessionToken()
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}
@@ -157,7 +159,7 @@ class TranslationKeys extends Sessions
 		{
 			$response = $this->methodGet(self::URL_API);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return [];
 		}
@@ -181,7 +183,7 @@ class TranslationKeys extends Sessions
 				'key_names' => $keys
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return [];
 		}
@@ -207,7 +209,7 @@ class TranslationKeys extends Sessions
 				]
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}
@@ -274,7 +276,7 @@ class TranslationKeys extends Sessions
 				'translation_key' => $translationKey
 			]);
 		}
-		catch (Exception $exception)
+		catch (BaseException $exception)
 		{
 			return false;
 		}

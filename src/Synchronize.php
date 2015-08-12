@@ -6,74 +6,23 @@ use DasRed\PhraseApp\Synchronize\Exception\FailureDeleteKey;
 use DasRed\PhraseApp\Synchronize\Exception\FailureAddLocale;
 use DasRed\PhraseApp\Synchronize\Exception\FailureStoreContent;
 use DasRed\PhraseApp\Synchronize\Exception\FailureStoreContentByTag;
-use DasRed\PhraseApp\Synchronize\Exception\InvalidPreferDirection;
 use DasRed\Zend\Log\LoggerAwareTrait;
 use Zend\Log\Logger;
 use Zend\Log\LoggerAwareInterface;
+use DasRed\PhraseApp\Request\KeysAwareInterface;
+use DasRed\PhraseApp\Request\LocalesAwareInterface;
+use DasRed\PhraseApp\Request\TranslationsAwareInterface;
+use DasRed\PhraseApp\Request\KeysAwareTrait;
+use DasRed\PhraseApp\Request\LocalesAwareTrait;
+use DasRed\PhraseApp\Request\TranslationsAwareTrait;
 
-class Synchronize implements LoggerAwareInterface
+class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwareInterface, LocalesAwareInterface, TranslationsAwareInterface
 {
 	use LoggerAwareTrait;
-
-	/**
-	 *
-	 * @var string
-	 */
-	const PREFER_REMOTE = 'remote';
-
-	/**
-	 *
-	 * @var string
-	 */
-	const PREFER_LOCAL = 'local';
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $authToken;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $baseUrl;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $localeDefault;
-
-	/**
-	 *
-	 * @var Locales
-	 */
-	protected $phraseLocales;
-
-	/**
-	 *
-	 * @var Translations
-	 */
-	protected $phraseTranslations;
-
-	/**
-	 *
-	 * @var TranslationKeys
-	 */
-	protected $phraseTranslationKeys;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $preferDirection = self::PREFER_REMOTE;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $tagForContentChangeFromLocalToRemote;
+	use ConfigAwareTrait;
+	use KeysAwareTrait;
+	use LocalesAwareTrait;
+	use TranslationsAwareTrait;
 
 	/**
 	 * current translations with [LOCALE => [KEY => CONTENT]]
@@ -84,33 +33,12 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @var string
-	 */
-	protected $userEmail;
-
-	/**
-	 *
-	 * @var string
-	 */
-	protected $userPassword;
-
-	/**
-	 *
 	 * @param Logger $logger
-	 * @param string $baseUrl
-	 * @param string $authToken
-	 * @param string $userEmail
-	 * @param string $userPassword
-	 * @param string $localeDefault
+	 * @param Config $config
 	 */
-	public function __construct(Logger $logger, $baseUrl, $authToken, $userEmail, $userPassword, $localeDefault)
+	public function __construct(Logger $logger, Config $config)
 	{
-		$this->setLogger($logger)
-			->setLocaleDefault($localeDefault)
-			->setBaseUrl($baseUrl)
-			->setAuthToken($authToken)
-			->setUserEmail($userEmail)
-			->setUserPassword($userPassword);
+		$this->setLogger($logger)->setConfig($config);
 	}
 
 	/**
@@ -150,93 +78,6 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @return string
-	 */
-	public function getAuthToken()
-	{
-		return $this->authToken;
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getBaseUrl()
-	{
-		return $this->baseUrl;
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getLocaleDefault()
-	{
-		return $this->localeDefault;
-	}
-
-	/**
-	 *
-	 * @return \DasRed\PhraseApp\Locales
-	 */
-	protected function getPhraseLocales()
-	{
-		if ($this->phraseLocales === null)
-		{
-			$this->phraseLocales = new Locales($this->getBaseUrl(), $this->getAuthToken());
-		}
-
-		return $this->phraseLocales;
-	}
-
-	/**
-	 *
-	 * @return \DasRed\PhraseApp\Translations
-	 */
-	protected function getPhraseTranslations()
-	{
-		if ($this->phraseTranslations === null)
-		{
-			$this->phraseTranslations = new Translations($this->getBaseUrl(), $this->getAuthToken());
-		}
-
-		return $this->phraseTranslations;
-	}
-
-	/**
-	 *
-	 * @return \DasRed\PhraseApp\TranslationKeys
-	 */
-	protected function getPhraseTranslationKeys()
-	{
-		if ($this->phraseTranslationKeys === null)
-		{
-			$this->phraseTranslationKeys = new TranslationKeys($this->getBaseUrl(), $this->getAuthToken(), $this->getUserEmail(), $this->getUserPassword());
-		}
-
-		return $this->phraseTranslationKeys;
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getPreferDirection()
-	{
-		return $this->preferDirection;
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getTagForContentChangeFromLocalToRemote()
-	{
-		return $this->tagForContentChangeFromLocalToRemote;
-	}
-
-	/**
-	 *
 	 * @param string $locale
 	 * @param string $key
 	 * @return string
@@ -267,11 +108,11 @@ class Synchronize implements LoggerAwareInterface
 		// sorting the locales so that the main locale is the first
 		usort($result, function ($localeA, $localeB)
 		{
-			if ($localeA === $this->getLocaleDefault())
+			if ($localeA === $this->getConfig()->getLocaleDefault())
 			{
-				return - 1;
+				return -1;
 			}
-			if ($localeB === $this->getLocaleDefault())
+			if ($localeB === $this->getConfig()->getLocaleDefault())
 			{
 				return 1;
 			}
@@ -286,14 +127,14 @@ class Synchronize implements LoggerAwareInterface
 	 *
 	 * @return array
 	 */
-	protected function getTranslationKeys($locale = null)
+	protected function getKeys($locale = null)
 	{
 		if ($locale === null)
 		{
 			$result = [];
 			foreach ($this->getTranslationLocales() as $locale)
 			{
-				$result = array_merge($result, $this->getTranslationKeys($locale));
+				$result = array_merge($result, $this->getKeys($locale));
 			}
 
 			return array_values(array_unique($result));
@@ -329,24 +170,6 @@ class Synchronize implements LoggerAwareInterface
 
 	/**
 	 *
-	 * @return string
-	 */
-	public function getUserEmail()
-	{
-		return $this->userEmail;
-	}
-
-	/**
-	 *
-	 * @return string
-	 */
-	public function getUserPassword()
-	{
-		return $this->userPassword;
-	}
-
-	/**
-	 *
 	 * @param string $key
 	 * @return self
 	 */
@@ -359,98 +182,6 @@ class Synchronize implements LoggerAwareInterface
 				unset($this->translations[$locale][$key]);
 			}
 		}
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $authToken
-	 * @return self
-	 */
-	protected function setAuthToken($authToken)
-	{
-		$this->authToken = $authToken;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $baseUrl
-	 * @return self
-	 */
-	protected function setBaseUrl($baseUrl)
-	{
-		$this->baseUrl = $baseUrl;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $localeDefault
-	 * @return self
-	 */
-	protected function setLocaleDefault($localeDefault)
-	{
-		$this->localeDefault = $localeDefault;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $preferDirection
-	 * @return self
-	 */
-	public function setPreferDirection($preferDirection)
-	{
-		if (in_array($preferDirection, [
-			self::PREFER_LOCAL,
-			self::PREFER_REMOTE
-		]) === false)
-		{
-			throw new InvalidPreferDirection($preferDirection);
-		}
-
-		$this->preferDirection = $preferDirection;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $tagForContentChangeFromLocalToRemote
-	 * @return self
-	 */
-	public function setTagForContentChangeFromLocalToRemote($tagForContentChangeFromLocalToRemote)
-	{
-		$this->tagForContentChangeFromLocalToRemote = $tagForContentChangeFromLocalToRemote;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $userEmail
-	 * @return self
-	 */
-	protected function setUserEmail($userEmail)
-	{
-		$this->userEmail = $userEmail;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @param string $userPassword
-	 * @return self
-	 */
-	protected function setUserPassword($userPassword)
-	{
-		$this->userPassword = $userPassword;
 
 		return $this;
 	}
@@ -484,15 +215,15 @@ class Synchronize implements LoggerAwareInterface
 	protected function synchronizeCleanUpKeys()
 	{
 		// clean up the keys in all other locales other then the main locale
-		$translationsForMainLocale = $this->getTranslations($this->getLocaleDefault());
+		$translationsForMainLocale = $this->getTranslations($this->getConfig()->getLocaleDefault());
 		foreach ($this->getTranslationLocales() as $locale)
 		{
-			if ($locale === $this->getLocaleDefault())
+			if ($locale === $this->getConfig()->getLocaleDefault())
 			{
 				continue;
 			}
 
-			foreach ($this->getTranslationKeys($locale) as $keyToDelete)
+			foreach ($this->getKeys($locale) as $keyToDelete)
 			{
 				if (array_key_exists($keyToDelete, $translationsForMainLocale) === false)
 				{
@@ -511,7 +242,7 @@ class Synchronize implements LoggerAwareInterface
 	protected function synchronizeContent()
 	{
 		$locales = $this->getTranslationLocales();
-		$countPerLocale = count($this->getTranslationKeys($this->getLocaleDefault()));
+		$countPerLocale = count($this->getKeys($this->getConfig()->getLocaleDefault()));
 		$count = count($locales) * $countPerLocale;
 
 		$this->log('Fetching full translation contents');
@@ -528,7 +259,7 @@ class Synchronize implements LoggerAwareInterface
 			$keysLocalToStore = [];
 
 			// prefer remote
-			if ($this->getPreferDirection() === self::PREFER_REMOTE)
+			if ($this->getConfig()->getPreferDirection() === Config::PREFER_REMOTE)
 			{
 				// overwrite all from remote and send only new content from local to remote
 				$countDifferencesLocal += count(array_diff($contentRemote, $contentLocale));
@@ -536,7 +267,7 @@ class Synchronize implements LoggerAwareInterface
 				$keysLocalToStore = array_diff(array_keys($contentLocale), array_keys($contentRemote));
 			}
 			// prefer local content... no changes on local content!
-			elseif ($this->getPreferDirection() === self::PREFER_LOCAL)
+			elseif ($this->getConfig()->getPreferDirection() === Config::PREFER_LOCAL)
 			{
 				// find differences between local and remote and send local to remote
 				foreach ($contentLocale as $key => $content)
@@ -562,7 +293,7 @@ class Synchronize implements LoggerAwareInterface
 				foreach ($keysLocalToStore as $keyLocalToStore)
 				{
 					// add the "new" tag to key if new in defaultlocale
-					if ($this->getTagForContentChangeFromLocalToRemote() !== null && $this->getLocaleDefault() === $locale && $this->getPhraseTranslationKeys()->addTag($keyLocalToStore, $this->getTagForContentChangeFromLocalToRemote()) === false)
+					if ($this->getConfig()->getTagForContentChangeFromLocalToRemote() !== null && $this->getConfig()->getLocaleDefault() === $locale && $this->getPhraseKeys()->addTag($keyLocalToStore, $this->getConfig()->getTagForContentChangeFromLocalToRemote()) === false)
 					{
 						throw new FailureStoreContentByTag($keyLocalToStore);
 					}
@@ -589,11 +320,11 @@ class Synchronize implements LoggerAwareInterface
 	protected function synchronizeKeys()
 	{
 		// collect keys given
-		$keysLocal = array_keys($this->getTranslations($this->getLocaleDefault()));
+		$keysLocal = array_keys($this->getTranslations($this->getConfig()->getLocaleDefault()));
 
 		// fetching the list of current translation keys in PhraseApp
 		$this->log('Fetching keys from PhraseApp');
-		$keysRemote = $this->getPhraseTranslationKeys()->fetch();
+		$keysRemote = $this->getPhraseKeys()->fetch();
 
 		// find keys for sync
 		$keysToCreate = array_diff($keysLocal, $keysRemote);
@@ -606,7 +337,7 @@ class Synchronize implements LoggerAwareInterface
 		{
 			foreach ($keysToCreate as $keyToCreate)
 			{
-				if ($this->getPhraseTranslationKeys()->create($keyToCreate) === false)
+				if ($this->getPhraseKeys()->create($keyToCreate) === false)
 				{
 					throw new FailureAddKey($keyToCreate);
 				}
@@ -620,7 +351,7 @@ class Synchronize implements LoggerAwareInterface
 		{
 			foreach ($keysToDelete as $keyToDelete)
 			{
-				if ($this->getPhraseTranslationKeys()->delete($keyToDelete) === false)
+				if ($this->getPhraseKeys()->delete($keyToDelete) === false)
 				{
 					throw new FailureDeleteKey($keyToDelete);
 				}
@@ -672,7 +403,7 @@ class Synchronize implements LoggerAwareInterface
 			$newTranslations = array_map(function ()
 			{
 				return '';
-			}, $this->getTranslations($this->getLocaleDefault()));
+			}, $this->getTranslations($this->getConfig()->getLocaleDefault()));
 
 			foreach ($localesToCreateLocale as $localeToCreateLocale)
 			{
