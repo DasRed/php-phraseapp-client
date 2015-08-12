@@ -1,8 +1,10 @@
 <?php
-namespace DasRedTest\PhraseApp;
+namespace DasRedTest\PhraseApp\Request;
 
 use DasRed\PhraseApp\Request\Translations;
 use DasRed\PhraseApp\Config;
+use DasRed\PhraseApp\Request\Locales;
+use DasRed\PhraseApp\Request\Keys;
 
 /**
  *
@@ -11,13 +13,29 @@ use DasRed\PhraseApp\Config;
 class TranslationsTest extends \PHPUnit_Framework_TestCase
 {
 	protected $config;
+	protected $locales;
+	protected $keys;
 
 	protected $loadWithData = [
 		1 => ['id' => 1, 'content' => 'c1', 'locale' => ['id' => 10, 'code' => 'de-DE'], 'key' => ['id' => 15, 'name' => 'c1key']],
-		2 => ['id' => 2, 'content' => 'c2', 'locale' => ['id' => 20, 'code' => 'de-DE'], 'key' => ['id' => 25, 'name' => 'c2key']],
-		3 => ['id' => 3, 'content' => 'c3', 'locale' => ['id' => 30, 'code' => 'de-DE'], 'key' => ['id' => 35, 'name' => 'c3key']],
-		4 => ['id' => 4, 'content' => 'c4', 'locale' => ['id' => 40, 'code' => 'de-DE'], 'key' => ['id' => 45, 'name' => 'c4key']],
+		2 => ['id' => 2, 'content' => 'c2', 'locale' => ['id' => 10, 'code' => 'de-DE'], 'key' => ['id' => 25, 'name' => 'c2key']],
+		3 => ['id' => 3, 'content' => 'c3', 'locale' => ['id' => 10, 'code' => 'de-DE'], 'key' => ['id' => 35, 'name' => 'c3key']],
+		4 => ['id' => 4, 'content' => 'c4', 'locale' => ['id' => 10, 'code' => 'de-DE'], 'key' => ['id' => 45, 'name' => 'c4key']],
 		5 => ['id' => 5, 'content' => 'c5', 'locale' => ['id' => 50, 'code' => 'ru-RU'], 'key' => ['id' => 55, 'name' => 'c5key']],
+	];
+
+	protected $localesData = [
+		'de-DE' => ['code' => 'de-DE', 'id' => 10],
+		'ru-RU' => ['code' => 'ru-RU', 'id' => 50],
+	];
+
+	protected $keysData = [
+		'c1key' => ['name' => 'c1key', 'id' => 15],
+		'c2key' => ['name' => 'c2key', 'id' => 25],
+		'c3key' => ['name' => 'c3key', 'id' => 35],
+		'c4key' => ['name' => 'c4key', 'id' => 45],
+		'c5key' => ['name' => 'c5key', 'id' => 55],
+		'c6key' => ['name' => 'c6key', 'id' => 65],
 	];
 
 	public function setUp()
@@ -25,6 +43,10 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 		parent::setUp();
 
 		$this->config = new Config('pp', 'b', 'de', 'appName', 'a');
+		$this->locales = new Locales($this->config);
+		$this->locales->getCollection()->combine($this->localesData);
+		$this->keys = new Keys($this->config);
+		$this->keys->getCollection()->combine($this->keysData);
 	}
 
 	public function tearDown()
@@ -32,6 +54,8 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 		parent::tearDown();
 
 		$this->config = null;
+		$this->locales = null;
+		$this->keys = null;
 	}
 
 	/**
@@ -99,15 +123,18 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testStoreSuccessCreate()
 	{
-		$this->markTestIncomplete();
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
-			'locale' => 'de-DE',
-			'key' => 'a/b/c/de.de',
-			'content' => 'mäh',
-		])->willReturn([]);
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'getPhraseAppLocales', 'getPhraseAppKeys', 'create', 'update'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->exactly(2))->method('getPhraseAppLocales')->with()->willReturn($this->locales);
+		$translations->expects($this->exactly(2))->method('getPhraseAppKeys')->with()->willReturn($this->keys);
+		$translations->expects($this->exactly(2))->method('create')->withConsecutive(
+			[10, 65, 'nuff'],
+			[50, 15, 'narf']
+		)->willReturn(true);
+		$translations->expects($this->never())->method('update');
 
-		$this->assertTrue($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+		$this->assertTrue($translations->store('de-DE', 'c6key', 'nuff'));
+		$this->assertTrue($translations->store('ru-RU', 'c1key', 'narf'));
 	}
 
 	/**
@@ -115,15 +142,18 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testStoreSuccessUpdate()
 	{
-		$this->markTestIncomplete();
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
-			'locale' => 'de-DE',
-			'key' => 'a/b/c/de.de',
-			'content' => 'mäh',
-		])->willReturn([]);
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'getPhraseAppLocales', 'getPhraseAppKeys', 'create', 'update'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->once())->method('load')->with()->willReturn($this->loadWithData);
+		$translations->expects($this->exactly(2))->method('getPhraseAppLocales')->with()->willReturn($this->locales);
+		$translations->expects($this->exactly(2))->method('getPhraseAppKeys')->with()->willReturn($this->keys);
+		$translations->expects($this->never())->method('create');
+		$translations->expects($this->exactly(2))->method('update')->withConsecutive(
+			[1, 'nuff'],
+			[5, 'narf']
+		)->willReturn(true);
 
-		$this->assertTrue($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+		$this->assertTrue($translations->store('de-DE', 'c1key', 'nuff'));
+		$this->assertTrue($translations->store('ru-RU', 'c5key', 'narf'));
 	}
 
 	/**
@@ -131,15 +161,14 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testStoreFailedByLocale()
 	{
-		$this->markTestIncomplete();
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
-			'locale' => 'de-DE',
-			'key' => 'a/b/c/de.de',
-			'content' => 'mäh',
-		])->willThrowException(new \DasRed\PhraseApp\Exception());
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'getPhraseAppLocales', 'getPhraseAppKeys', 'create', 'update'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->never())->method('load');
+		$translations->expects($this->once())->method('getPhraseAppLocales')->with()->willReturn($this->locales);
+		$translations->expects($this->never())->method('getPhraseAppKeys');
+		$translations->expects($this->never())->method('create');
+		$translations->expects($this->never())->method('update');
 
-		$this->assertFalse($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+		$this->assertFalse($translations->store('de-RU-Hans', 'c1key', 'nuff'));
 	}
 
 	/**
@@ -147,15 +176,14 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testStoreFailedByKey()
 	{
-		$this->markTestIncomplete();
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodPost'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodPost')->with('translations/store', [
-			'locale' => 'de-DE',
-			'key' => 'a/b/c/de.de',
-			'content' => 'mäh',
-		])->willThrowException(new \DasRed\PhraseApp\Exception());
+		$translations = $this->getMockBuilder(Translations::class)->setMethods(['load', 'getPhraseAppLocales', 'getPhraseAppKeys', 'create', 'update'])->setConstructorArgs([$this->config])->getMock();
+		$translations->expects($this->never())->method('load');
+		$translations->expects($this->once())->method('getPhraseAppLocales')->with()->willReturn($this->locales);
+		$translations->expects($this->once())->method('getPhraseAppKeys')->with()->willReturn($this->keys);
+		$translations->expects($this->never())->method('create');
+		$translations->expects($this->never())->method('update');
 
-		$this->assertFalse($translations->store('de-DE', 'a/b/c/de.de', 'mäh'));
+		$this->assertFalse($translations->store('de-DE', 'snuff', 'nuff'));
 	}
 
 	/**
