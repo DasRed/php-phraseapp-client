@@ -5,6 +5,8 @@ use DasRed\PhraseApp\Synchronize\Files;
 use DasRed\PhraseApp\Synchronize\Files\HandlerInterface;
 use Zend\Log\Logger;
 use DasRed\PhraseApp\TranslationKeys;
+use DasRed\PhraseApp\Synchronize\Exception\FailureAddKey;
+use DasRed\PhraseApp\Synchronize\Exception\FailureDeleteKey;
 
 /**
  * @coversDefaultClass \DasRed\PhraseApp\Synchronize\Files
@@ -132,7 +134,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::synchronizeKeysCreateKey
 	 */
-	public function testSynchronizeKeysCreateKey()
+	public function testSynchronizeKeysCreateKeySuccess()
 	{
 		$key = 'abc.def';
 		$callOrder = [];
@@ -195,6 +197,71 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @covers ::synchronizeKeysCreateKey
+	 */
+	public function testSynchronizeKeysCreateKeySuccessFailed()
+	{
+		$key = 'abc.def';
+		$callOrder = [];
+
+		$translationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['create'])->disableOriginalConstructor()->getMock();
+		$translationKeys->expects($this->once())->method('create')->with(
+			$this->identicalTo($key),
+			$this->identicalTo('ABb'),
+			['A', 'Z', 'Z1', 'Z2', 'Z10', 'Z12', 'z']
+		)->willReturn(false);
+
+		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseTranslationKeys'])->disableOriginalConstructor()->getMock();
+		$files->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($translationKeys);
+
+		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey', 'getTagsForKey']);
+
+		$handlerA = $builder->getMockForAbstractClass();
+		$handlerA->expects($this->exactly(2))->method('getDescriptionForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
+		{
+			$this->assertSame($key, $keyArg);
+			$callOrder[] = 'A';
+
+			return true;
+		}))->willReturnOnConsecutiveCalls('A', '');
+
+		$handlerA->expects($this->exactly(2))->method('getTagsForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
+		{
+			$this->assertSame($key, $keyArg);
+			$callOrder[] = 'A';
+
+			return true;
+		}))->willReturnOnConsecutiveCalls(['Z', 'z'], ['Z2', 'Z12', 'Z1', 'Z10']);
+
+		$handlerB = $builder->getMockForAbstractClass();
+		$handlerB->expects($this->exactly(2))->method('getDescriptionForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
+		{
+			$this->assertSame($key, $keyArg);
+			$callOrder[] = 'B';
+
+			return true;
+		}))->willReturnOnConsecutiveCalls('B', 'b');
+		$handlerB->expects($this->exactly(2))->method('getTagsForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
+		{
+			$this->assertSame($key, $keyArg);
+			$callOrder[] = 'B';
+
+			return true;
+		}))->willReturnOnConsecutiveCalls(['A', 'z'], []);
+
+		$reflectionMethod = new \ReflectionMethod($files, 'synchronizeKeysCreateKey');
+		$reflectionMethod->setAccessible(true);
+
+		$files->appendHandler($handlerA);
+		$files->appendHandler($handlerB);
+		$files->appendHandler($handlerA);
+		$files->appendHandler($handlerB);
+
+		$this->assertFalse($reflectionMethod->invoke($files, $key));
+		$this->assertEquals(['A', 'A', 'B', 'B', 'A', 'A', 'B', 'B'], $callOrder);
+	}
+
+	/**
 	 * @covers ::write
 	 */
 	public function testWrite()
@@ -234,4 +301,176 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($files, $reflectionMethod->invoke($files));
 		$this->assertEquals(['A', 'B', 'A'], $callOrder);
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * @covers ::synchronizeKeys
+	 */
+	public function testSynchronizeKeysSuccess()
+	{
+		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
+		$keysRemote = ['b', 'de', 'nuff', 'narf'];
+
+		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseTranslationKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
+		$phraseTranslationKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
+
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
+		$sync->expects($this->exactly(5))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(2))->method('removeTranslationKeyFromAllLocales')->withConsecutive(['nuff'], ['narf'])->willReturnSelf();
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertSame($sync, $reflectionMethod->invoke($sync));
+	}
+
+	/**
+	 * @covers ::synchronizeKeys
+	 */
+	public function testSynchronizeKeysSuccessWithoutCreate()
+	{
+		$keysLocal = ['b' => '2', 'de' => '4'];
+		$keysRemote = ['b', 'de', 'nuff', 'narf'];
+
+		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseTranslationKeys->expects($this->never())->method('create');
+		$phraseTranslationKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
+
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
+		$sync->expects($this->exactly(3))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->exactly(2))->method('removeTranslationKeyFromAllLocales')->withConsecutive(['nuff'], ['narf'])->willReturnSelf();
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertSame($sync, $reflectionMethod->invoke($sync));
+	}
+
+	/**
+	 * @covers ::synchronizeKeys
+	 */
+	public function testSynchronizeKeysSuccessWithoutDelete()
+	{
+		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
+		$keysRemote = ['b', 'de'];
+
+		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseTranslationKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
+		$phraseTranslationKeys->expects($this->never())->method('delete');
+
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
+		$sync->expects($this->exactly(3))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertSame($sync, $reflectionMethod->invoke($sync));
+	}
+
+	/**
+	 * @covers ::synchronizeKeys
+	 */
+	public function testSynchronizeKeysSuccessWithoutCreateAndDelete()
+	{
+		$keysLocal = ['b' => '2', 'de' => '4'];
+		$keysRemote = ['b', 'de'];
+
+		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseTranslationKeys->expects($this->never())->method('create');
+		$phraseTranslationKeys->expects($this->never())->method('delete');
+
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
+		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertSame($sync, $reflectionMethod->invoke($sync));
+	}
+
+	/**
+	 * @covers ::synchronizeKeys
+	 */
+	public function testSynchronizeKeysFailedByCreate()
+	{
+		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
+		$keysRemote = ['b', 'de', 'nuff', 'narf'];
+
+		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseTranslationKeys->expects($this->once())->method('create')->with('en')->willReturn(false);
+		$phraseTranslationKeys->expects($this->never())->method('delete');
+
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
+		$sync->expects($this->exactly(2))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
+		$reflectionMethod->setAccessible(true);
+
+		$this->setExpectedException(FailureAddKey::class);
+		$reflectionMethod->invoke($sync);
+	}
+
+	/**
+	 * @covers ::synchronizeKeys
+	 */
+	public function testSynchronizeKeysFailedByDelete()
+	{
+		$keysLocal = ['b' => '2', 'de' => '4', 'en' => '2', 'fr' => 'narf'];
+		$keysRemote = ['b', 'de', 'nuff', 'narf'];
+
+		$phraseTranslationKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseTranslationKeys->expects($this->once())->method('fetch')->with()->willReturn($keysRemote);
+		$phraseTranslationKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
+		$phraseTranslationKeys->expects($this->once())->method('delete')->with('nuff')->willReturn(false);
+
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseTranslationKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, 'a', 'b', 'c', 'd', 'de'])->getMock();
+		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
+		$sync->expects($this->exactly(4))->method('getPhraseTranslationKeys')->with()->willReturn($phraseTranslationKeys);
+		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeys');
+		$reflectionMethod->setAccessible(true);
+
+		$this->setExpectedException(FailureDeleteKey::class);
+		$reflectionMethod->invoke($sync);
+	}
+
 }

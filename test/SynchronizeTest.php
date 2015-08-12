@@ -877,4 +877,38 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$reflectionMethod->invoke($sync);
 		$this->assertEquals([], $reflectionProperty->getValue($sync));
 	}
+
+	/**
+	 * @covers ::synchronizeKeysCreateKey
+	 */
+	public function testSynchronizeKeysCreateKeySuccess()
+	{
+		$phraseKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('create')->with('nuff')->willReturn(true);
+
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslationKeys'])->setConstructorArgs([$this->logger, '', '', '', '', ''])->getMock();
+		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseKeys);
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeysCreateKey');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertTrue($reflectionMethod->invoke($sync, 'nuff'));
+	}
+
+	/**
+	 * @covers ::synchronizeKeysCreateKey
+	 */
+	public function testSynchronizeKeysCreateKeyFailed()
+	{
+		$phraseKeys = $this->getMockBuilder(TranslationKeys::class)->setMethods(['fetch', 'create', 'delete'])->disableOriginalConstructor()->getMock();
+		$phraseKeys->expects($this->once())->method('create')->with('nuff')->willReturn(false);
+
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseTranslationKeys'])->setConstructorArgs([$this->logger, '', '', '', '', ''])->getMock();
+		$sync->expects($this->once())->method('getPhraseTranslationKeys')->with()->willReturn($phraseKeys);
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeKeysCreateKey');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertFalse($reflectionMethod->invoke($sync, 'nuff'));
+	}
 }

@@ -606,7 +606,7 @@ class Synchronize implements LoggerAwareInterface
 		{
 			foreach ($keysToCreate as $keyToCreate)
 			{
-				if ($this->getPhraseTranslationKeys()->create($keyToCreate) === false)
+				if ($this->synchronizeKeysCreateKey($keyToCreate) === false)
 				{
 					throw new FailureAddKey($keyToCreate);
 				}
@@ -630,6 +630,16 @@ class Synchronize implements LoggerAwareInterface
 		}
 
 		return $this;
+	}
+
+	/**
+	 *
+	 * @param string $key
+	 * @return boolean
+	 */
+	protected function synchronizeKeysCreateKey($key)
+	{
+		return $this->getPhraseTranslationKeys()->create($key);
 	}
 
 	/**
