@@ -15,13 +15,6 @@ interface HandlerInterface
 
 	/**
 	 *
-	 * @param string $key
-	 * @return string
-	 */
-	public function getTagsForKey($key);
-
-	/**
-	 *
 	 * @param Synchronize $synchronize
 	 * @return bool
 	 */

@@ -30,20 +30,6 @@ class Php extends TypeAbstract
 
 	/**
 	 *
-	 * @param string $key
-	 * @return array
-	 */
-	public function getTagsForKey($key)
-	{
-		$keyInformation = $this->getKeyInformation($key);
-
-		return [
-			$keyInformation['filePart']
-		];
-	}
-
-	/**
-	 *
 	 * @param string $file
 	 * @param string $keyPrefix
 	 * @return array

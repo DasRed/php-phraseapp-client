@@ -70,18 +70,6 @@ class PhpTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame('php', $reflectionMethod->invoke($php));
 	}
 
-	/**
-	 * @covers ::getTagsForKey
-	 */
-	public function testGetTagsForKey()
-	{
-		$php = new Php(__DIR__);
-
-		$this->assertEquals([
-			'abc'
-		], $php->getTagsForKey('abc.def'));
-	}
-
 	public function dataProviderReadFile()
 	{
 		return [

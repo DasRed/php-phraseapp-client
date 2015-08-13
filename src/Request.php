@@ -179,14 +179,29 @@ class Request implements ConfigAwareInterface
 			throw new RequestException($exception->getMessage(), $exception->getCode());
 		}
 
+		// sometimes it is chunked but not chunked
+		try
+		{
+			$content = $response->getBody();
+		}
+		catch (\Zend\Http\Exception\RuntimeException $exception)
+		{
+			if ($exception->getMessage() !== 'Error parsing body - doesn\'t seem to be a chunked message')
+			{
+				throw $exception;
+			}
+
+			$content = $response->getContent();
+		}
+
 		// react on request info / header status
 		if ((int)floor($response->getStatusCode() / 100) !== 2)
 		{
-			throw new HttpStatus($response->getBody(), (int)$response->getStatusCode());
+			throw new HttpStatus($content, (int)$response->getStatusCode());
 		}
 
 		// convert json
-		$result = json_decode($response->getBody(), JSON_OBJECT_AS_ARRAY);
+		$result = json_decode($content, JSON_OBJECT_AS_ARRAY);
 
 		// result failed
 		$jsonLastErrorNumber = json_last_error();

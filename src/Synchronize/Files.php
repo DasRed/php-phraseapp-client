@@ -68,7 +68,6 @@ class Files extends Synchronize
 	protected function synchronizeKeysCreateKey($key)
 	{
 		$description = '';
-		$tags = [];
 
 		/* @var $handler HandlerInterface */
 		foreach ($this->handlers as $handler)
@@ -78,14 +77,9 @@ class Files extends Synchronize
 			{
 				$description .= $descriptionFromHandler;
 			}
-
-			$tags = array_merge($tags, $handler->getTagsForKey($key));
 		}
 
-		$tags = array_unique($tags, SORT_NATURAL);
-		sort($tags, SORT_NATURAL);
-
-		if ($this->getPhraseAppKeys()->create($key, $description, $tags) === false)
+		if ($this->getPhraseAppKeys()->create($key, $description) === false)
 		{
 			throw new FailureAddKey($key);
 		}

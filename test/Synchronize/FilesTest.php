@@ -134,14 +134,13 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$translationKeys = $this->getMockBuilder(Keys::class)->setMethods(['create'])->disableOriginalConstructor()->getMock();
 		$translationKeys->expects($this->once())->method('create')->with(
 			$this->identicalTo($key),
-			$this->identicalTo('ABb'),
-			['A', 'Z', 'Z1', 'Z2', 'Z10', 'Z12', 'z']
+			$this->identicalTo('ABb')
 		)->willReturn(true);
 
 		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseAppKeys'])->disableOriginalConstructor()->getMock();
 		$files->expects($this->once())->method('getPhraseAppKeys')->with()->willReturn($translationKeys);
 
-		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey', 'getTagsForKey']);
+		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey']);
 
 		$handlerA = $builder->getMockForAbstractClass();
 		$handlerA->expects($this->exactly(2))->method('getDescriptionForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
@@ -152,14 +151,6 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 			return true;
 		}))->willReturnOnConsecutiveCalls('A', '');
 
-		$handlerA->expects($this->exactly(2))->method('getTagsForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
-		{
-			$this->assertSame($key, $keyArg);
-			$callOrder[] = 'A';
-
-			return true;
-		}))->willReturnOnConsecutiveCalls(['Z', 'z'], ['Z2', 'Z12', 'Z1', 'Z10']);
-
 		$handlerB = $builder->getMockForAbstractClass();
 		$handlerB->expects($this->exactly(2))->method('getDescriptionForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
 		{
@@ -168,13 +159,6 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 
 			return true;
 		}))->willReturnOnConsecutiveCalls('B', 'b');
-		$handlerB->expects($this->exactly(2))->method('getTagsForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
-		{
-			$this->assertSame($key, $keyArg);
-			$callOrder[] = 'B';
-
-			return true;
-		}))->willReturnOnConsecutiveCalls(['A', 'z'], []);
 
 		$reflectionMethod = new \ReflectionMethod($files, 'synchronizeKeysCreateKey');
 		$reflectionMethod->setAccessible(true);
@@ -185,7 +169,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$files->appendHandler($handlerB);
 
 		$this->assertSame($files, $reflectionMethod->invoke($files, $key));
-		$this->assertEquals(['A', 'A', 'B', 'B', 'A', 'A', 'B', 'B'], $callOrder);
+		$this->assertEquals(['A', 'B', 'A', 'B'], $callOrder);
 	}
 
 	/**
@@ -199,14 +183,13 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$translationKeys = $this->getMockBuilder(Keys::class)->setMethods(['create'])->disableOriginalConstructor()->getMock();
 		$translationKeys->expects($this->once())->method('create')->with(
 			$this->identicalTo($key),
-			$this->identicalTo('ABb'),
-			['A', 'Z', 'Z1', 'Z2', 'Z10', 'Z12', 'z']
+			$this->identicalTo('ABb')
 		)->willReturn(false);
 
 		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseAppKeys'])->disableOriginalConstructor()->getMock();
 		$files->expects($this->once())->method('getPhraseAppKeys')->with()->willReturn($translationKeys);
 
-		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey', 'getTagsForKey']);
+		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey']);
 
 		$handlerA = $builder->getMockForAbstractClass();
 		$handlerA->expects($this->exactly(2))->method('getDescriptionForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
@@ -217,14 +200,6 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 			return true;
 		}))->willReturnOnConsecutiveCalls('A', '');
 
-		$handlerA->expects($this->exactly(2))->method('getTagsForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
-		{
-			$this->assertSame($key, $keyArg);
-			$callOrder[] = 'A';
-
-			return true;
-		}))->willReturnOnConsecutiveCalls(['Z', 'z'], ['Z2', 'Z12', 'Z1', 'Z10']);
-
 		$handlerB = $builder->getMockForAbstractClass();
 		$handlerB->expects($this->exactly(2))->method('getDescriptionForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
 		{
@@ -233,13 +208,6 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 
 			return true;
 		}))->willReturnOnConsecutiveCalls('B', 'b');
-		$handlerB->expects($this->exactly(2))->method('getTagsForKey')->with($this->callback(function($keyArg) use (&$callOrder, $key)
-		{
-			$this->assertSame($key, $keyArg);
-			$callOrder[] = 'B';
-
-			return true;
-		}))->willReturnOnConsecutiveCalls(['A', 'z'], []);
 
 		$reflectionMethod = new \ReflectionMethod($files, 'synchronizeKeysCreateKey');
 		$reflectionMethod->setAccessible(true);
@@ -293,65 +261,6 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame($files, $reflectionMethod->invoke($files));
 		$this->assertEquals(['A', 'B', 'A'], $callOrder);
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * @covers ::synchronizeKeys

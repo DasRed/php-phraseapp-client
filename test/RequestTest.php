@@ -223,9 +223,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
-		$response->expects($this->never())->method('getStatusCode')->willReturn(200);
-		$response->expects($this->never())->method('getBody')->willReturn('{"success": true}');
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
+		$response->expects($this->never())->method('getStatusCode');
+		$response->expects($this->never())->method('getBody');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
@@ -264,9 +265,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->exactly(2))->method('getStatusCode')->willReturn(401);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
@@ -305,9 +307,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
@@ -334,6 +337,131 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::request
 	 */
+	public function testRequestFailedByGetBodyOfResponse()
+	{
+		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
+		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+			['Content-Type', 'application/json'],
+			['User-Agent', $this->config->getApplicationName()],
+			['Authorization', 'token ' . $this->config->getAccessToken()]
+		)->willReturnSelf();
+
+		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
+		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
+
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
+		$response->expects($this->never())->method('getStatusCode');
+		$response->expects($this->once())->method('getBody')->willThrowException(new \Exception('nuff'));
+		$response->expects($this->never())->method('getContent');
+
+		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
+		$client->expects($this->once())->method('reset')->with()->willReturnSelf();
+		$client->expects($this->once())->method('setUri')->with('a/b')->willReturnSelf();
+		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_GET)->willReturnSelf();
+		$client->expects($this->never())->method('setParameterPost');
+		$client->expects($this->once())->method('setParameterGet')->with([
+			'a' => 1,
+		])->willReturnSelf();
+		$client->expects($this->never())->method('setRawBody');
+		$client->expects($this->once())->method('send')->with()->willReturn($response);
+
+		$request = $this->getMockBuilder(Request::class)->setMethods(['getClient'])->setConstructorArgs([$this->config])->getMock();
+		$request->expects($this->any())->method('getClient')->willReturn($client);
+
+		$reflectionMethod = new \ReflectionMethod($request, 'request');
+		$reflectionMethod->setAccessible(true);
+
+		$this->setExpectedException(\Exception::class, 'nuff');
+		$reflectionMethod->invoke($request, 'b', Request::METHOD_GET, ['a' => 1]);
+	}
+
+	/**
+	 * @covers ::request
+	 */
+	public function testRequestFailedByGetBodyRuntimeExceptionWhichIsNotChunked()
+	{
+		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
+		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+			['Content-Type', 'application/json'],
+			['User-Agent', $this->config->getApplicationName()],
+			['Authorization', 'token ' . $this->config->getAccessToken()]
+		)->willReturnSelf();
+
+		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
+		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
+
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
+		$response->expects($this->never())->method('getStatusCode');
+		$response->expects($this->once())->method('getBody')->willThrowException(new \Zend\Http\Exception\RuntimeException('NUFFNUFF'));
+		$response->expects($this->never())->method('getContent');
+
+		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
+		$client->expects($this->once())->method('reset')->with()->willReturnSelf();
+		$client->expects($this->once())->method('setUri')->with('a/b')->willReturnSelf();
+		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_GET)->willReturnSelf();
+		$client->expects($this->never())->method('setParameterPost');
+		$client->expects($this->once())->method('setParameterGet')->with([
+			'a' => 1,
+		])->willReturnSelf();
+		$client->expects($this->never())->method('setRawBody');
+		$client->expects($this->once())->method('send')->with()->willReturn($response);
+
+		$request = $this->getMockBuilder(Request::class)->setMethods(['getClient'])->setConstructorArgs([$this->config])->getMock();
+		$request->expects($this->any())->method('getClient')->willReturn($client);
+
+		$reflectionMethod = new \ReflectionMethod($request, 'request');
+		$reflectionMethod->setAccessible(true);
+
+		$this->setExpectedException(\Zend\Http\Exception\RuntimeException::class, 'NUFFNUFF');
+		$reflectionMethod->invoke($request, 'b', Request::METHOD_GET, ['a' => 1]);
+	}
+
+	/**
+	 * @covers ::request
+	 */
+	public function testRequestSuccessDespiteGetBodyExceptionIsNotChunked()
+	{
+		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
+		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+			['Content-Type', 'application/json'],
+			['User-Agent', $this->config->getApplicationName()],
+			['Authorization', 'token ' . $this->config->getAccessToken()]
+		)->willReturnSelf();
+
+		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
+		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
+
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
+		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
+		$response->expects($this->once())->method('getBody')->willThrowException(new \Zend\Http\Exception\RuntimeException('Error parsing body - doesn\'t seem to be a chunked message'));
+		$response->expects($this->once())->method('getContent')->willReturn('{"success": true}');
+
+		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
+		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
+		$client->expects($this->once())->method('reset')->with()->willReturnSelf();
+		$client->expects($this->once())->method('setUri')->with('a/b')->willReturnSelf();
+		$client->expects($this->once())->method('setMethod')->with(Request::METHOD_GET)->willReturnSelf();
+		$client->expects($this->never())->method('setParameterPost');
+		$client->expects($this->once())->method('setParameterGet')->with([
+			'a' => 1,
+		])->willReturnSelf();
+		$client->expects($this->never())->method('setRawBody');
+		$client->expects($this->once())->method('send')->with()->willReturn($response);
+
+		$request = $this->getMockBuilder(Request::class)->setMethods(['getClient'])->setConstructorArgs([$this->config])->getMock();
+		$request->expects($this->any())->method('getClient')->willReturn($client);
+
+		$reflectionMethod = new \ReflectionMethod($request, 'request');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertEquals(['success' => true], $reflectionMethod->invoke($request, 'b', Request::METHOD_GET, ['a' => 1]));
+	}
+
+	/**
+	 * @covers ::request
+	 */
 	public function testRequestSuccessMethodGET()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
@@ -346,9 +474,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
@@ -391,9 +520,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->exactly(2))->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->exactly(2))->method('getRequest')->with()->willReturn($request);
@@ -434,9 +564,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->exactly(2))->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->exactly(2))->method('getRequest')->with()->willReturn($request);
@@ -477,9 +608,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->exactly(2))->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->exactly(2))->method('getRequest')->with()->willReturn($request);
@@ -520,9 +652,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->exactly(2))->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->exactly(2))->method('getRequest')->with()->willReturn($request);
@@ -558,9 +691,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
@@ -598,9 +732,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
@@ -636,9 +771,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		$request = $this->getMockBuilder(\Zend\Http\Request::class)->setMethods(['getHeaders'])->disableOriginalConstructor()->getMock();
 		$request->expects($this->once())->method('getHeaders')->with()->willReturn($headers);
 
-		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody'])->disableOriginalConstructor()->getMock();
+		$response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getBody', 'getContent'])->disableOriginalConstructor()->getMock();
 		$response->expects($this->once())->method('getStatusCode')->willReturn(200);
 		$response->expects($this->once())->method('getBody')->willReturn('{"success": true}');
+		$response->expects($this->never())->method('getContent');
 
 		$client = $this->getMockBuilder(Client::class)->setMethods(['getRequest', 'reset', 'setUri', 'setMethod', 'setParameterPost', 'setParameterGet', 'setRawBody', 'send'])->disableOriginalConstructor()->getMock();
 		$client->expects($this->once())->method('getRequest')->with()->willReturn($request);
