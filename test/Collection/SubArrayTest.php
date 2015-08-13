@@ -143,30 +143,6 @@ class SubArrayTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::getBy
-	 */
-	public function testGetBy()
-	{
-		$collection = new SubArray('id');
-
-		$this->assertNull($collection->getBy('nuff', 'narf'));
-
-		$collection->combine([
-			['id' => 'A', 'nuff' => 'narf'],
-			['id' => 'B', 'narf' => 'nuff'],
-			['id' => 'C', 'lol' => 'nuff']
-		]);
-
-		$this->assertEquals(['id' => 'A', 'nuff' => 'narf'], $collection->getBy('nuff', 'narf'));
-		$this->assertEquals(['id' => 'B', 'narf' => 'nuff'], $collection->getBy('narf', 'nuff'));
-		$this->assertEquals(['id' => 'C', 'lol' => 'nuff'], $collection->getBy('lol', 'nuff'));
-
-		$this->assertNull($collection->getBy('nuff', 'sccc'));
-		$this->assertNull($collection->getBy('narf', 'rofl'));
-		$this->assertNull($collection->getBy('lol', 'narf'));
-	}
-
-	/**
 	 * @covers ::keys
 	 */
 	public function testKeys()
@@ -283,38 +259,11 @@ class SubArrayTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::mapBy
+	 * @covers ::remove
 	 */
-	public function testMapBy()
+	public function testRemove()
 	{
 		$collection = new SubArray('id');
-
-		$this->assertEquals([], $collection->mapBy('id'));
-
-		$collection->append(['id' => 'A', 'nuff' => 'narf']);
-		$this->assertEquals(['A' => 'narf'], $collection->mapBy('nuff'));
-
-		$collection->append(['id' => 'B', 'narf' => 'nuff']);
-		$this->assertEquals(['A' => 'narf'], $collection->mapBy('nuff'));
-
-		$collection->append(['id' => 'B', 'narf' => 'nuff']);
-		$this->assertEquals(['B' => 'nuff'], $collection->mapBy('narf'));
-
-		$collection->append(['id' => 'C', 'lol' => 'nuff']);
-		$this->assertEquals(['A' => 'A', 'B' => 'B', 'C' => 'C'], $collection->mapBy('id'));
-	}
-
-	/**
-	 * @covers ::filter
-	 */
-	public function testFilter()
-	{
-		$collection = new SubArray('id');
-
-		$this->assertEquals([], $collection->filter(function($entry)
-		{
-			$this->fail();
-		})->getArrayCopy());
 
 		$collection->combine([
 			['id' => 'A', 'nuff' => 'narf'],
@@ -322,11 +271,56 @@ class SubArrayTest extends \PHPUnit_Framework_TestCase
 			['id' => 'C', 'lol' => 'nuff']
 		]);
 
-		$this->assertEquals([
-			'A' => ['id' => 'A', 'nuff' => 'narf'],
-			'B' => ['id' => 'B', 'narf' => 'nuff'],
-			'C' => ['id' => 'C', 'lol' => 'nuff']
-		], $collection->filter(function($entry, $index)
+		$this->assertSame($collection, $collection->remove('A'));
+		$this->assertEquals(['B', 'C'], $collection->keys());
+		$this->assertSame($collection, $collection->remove('A'));
+		$this->assertEquals(['B', 'C'], $collection->keys());
+	}
+
+	/**
+	 * @covers ::each
+	 */
+	public function testEach()
+	{
+		$collection = new SubArray('id');
+
+		$this->assertSame($collection, $collection->each(function($entry)
+		{
+			$this->fail();
+		}));
+
+		$collection->append(['id' => 'A', 'nuff' => 'narf']);
+		$this->assertSame($collection, $collection->each(function($entry, $index)
+		{
+			$this->assertEquals(['id' => 'A', 'nuff' => 'narf'], $entry);
+			$this->assertEquals('A', $index);
+		}));
+
+		$collection->append(['id' => 'B', 'narf' => 'nuff']);
+		$this->assertSame($collection, $collection->each(function($entry, $index)
+		{
+			static $i = 0;
+
+			if ($i == 0)
+			{
+				$this->assertEquals(['id' => 'A', 'nuff' => 'narf'], $entry);
+				$this->assertEquals('A', $index);
+			}
+			elseif ($i == 1)
+			{
+				$this->assertEquals(['id' => 'B', 'narf' => 'nuff'], $entry);
+				$this->assertEquals('B', $index);
+			}
+			else
+			{
+				$this->fail();
+			}
+
+			$i++;
+		}));
+
+		$collection->append(['id' => 'C', 'lol' => 'nuff']);
+		$this->assertSame($collection, $collection->each(function($entry, $index)
 		{
 			static $i = 0;
 
@@ -351,58 +345,6 @@ class SubArrayTest extends \PHPUnit_Framework_TestCase
 			}
 
 			$i++;
-
-			return true;
-		})->getArrayCopy());
-
-		$this->assertEquals([
-			'A' => ['id' => 'A', 'nuff' => 'narf'],
-			'C' => ['id' => 'C', 'lol' => 'nuff']
-		], $collection->filter(function($entry, $index)
-		{
-			static $i = 0;
-
-			$i++;
-
-			return ($i != 2);
-		})->getArrayCopy());
-	}
-
-	/**
-	 * @covers ::filterBy
-	 */
-	public function testFilterBy()
-	{
-		$collection = new SubArray('id');
-
-		$this->assertEquals([], $collection->filterBy('nuff', 'narf')->getArrayCopy());
-
-		$collection->combine([
-			['id' => 'A', 'nuff' => 'narf'],
-			['id' => 'B', 'narf' => 'nuff'],
-			['id' => 'C', 'lol' => 'nuff']
-		]);
-
-		$this->assertEquals(['A' => ['id' => 'A', 'nuff' => 'narf'],], $collection->filterBy('nuff', 'narf')->getArrayCopy());
-	}
-
-
-	/**
-	 * @covers ::remove
-	 */
-	public function testRemove()
-	{
-		$collection = new SubArray('id');
-
-		$collection->combine([
-			['id' => 'A', 'nuff' => 'narf'],
-			['id' => 'B', 'narf' => 'nuff'],
-			['id' => 'C', 'lol' => 'nuff']
-		]);
-
-		$this->assertSame($collection, $collection->remove('A'));
-		$this->assertEquals(['B', 'C'], $collection->keys());
-		$this->assertSame($collection, $collection->remove('A'));
-		$this->assertEquals(['B', 'C'], $collection->keys());
+		}));
 	}
 }

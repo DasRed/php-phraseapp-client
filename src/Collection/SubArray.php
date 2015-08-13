@@ -3,6 +3,7 @@ namespace DasRed\PhraseApp\Collection;
 
 class SubArray extends \ArrayIterator
 {
+
 	/**
 	 *
 	 * @var string
@@ -52,39 +53,15 @@ class SubArray extends \ArrayIterator
 	 * @param \Closure $callback
 	 * @return self
 	 */
-	public function filter(\Closure $callback)
+	public function each(\Closure $callback)
 	{
-		$result = [];
 		foreach ($this as $index => $entry)
 		{
-			if ($callback($entry, $index) === true)
-			{
-				$result[$index] = $entry;
-			}
+			$callback($entry, $index);
 		}
 
-		return new static($this->getIdKey(), $result);
+		return $this;
 	}
-
-	/**
-	 *
-	 * @param string $fieldName
-	 * @param string $fieldValue
-	 * @return self
-	 */
-	public function filterBy($fieldName, $fieldValue)
-	{
-		return $this->filter(function(array $entry) use ($fieldName, $fieldValue)
-		{
-			if (array_key_exists($fieldName, $entry) === false)
-			{
-				return false;
-			}
-
-			return $entry[$fieldName] == $fieldValue;
-		});
-	}
-
 	/**
 	 *
 	 * @param \Closure $callback
@@ -119,25 +96,6 @@ class SubArray extends \ArrayIterator
 	}
 
 	/**
-	 *
-	 * @param string $fieldName
-	 * @param string $fieldValue
-	 * @return array|null
-	 */
-	public function getBy($fieldName, $fieldValue)
-	{
-		return $this->find(function (array $entry) use($fieldName, $fieldValue)
-		{
-			if (array_key_exists($fieldName, $entry) === false)
-			{
-				return false;
-			}
-
-			return $entry[$fieldName] == $fieldValue;
-		});
-	}
-
-	/**
 	 * @return string
 	 */
 	public function getIdKey()
@@ -167,27 +125,6 @@ class SubArray extends \ArrayIterator
 		}
 
 		return $result;
-	}
-
-	/**
-	 *
-	 * @param string $fieldName
-	 * @return array
-	 */
-	public function mapBy($fieldName)
-	{
-		return array_filter($this->map(function(array $entry) use ($fieldName)
-		{
-			if (array_key_exists($fieldName, $entry) === false)
-			{
-				return null;
-			}
-
-			return $entry[$fieldName];
-		}), function($entry)
-		{
-			return $entry !== null;
-		});
 	}
 
 	/**
