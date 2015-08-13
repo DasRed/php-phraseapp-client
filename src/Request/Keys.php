@@ -12,6 +12,7 @@ use DasRed\PhraseApp\Collection\SubArrayAwareTrait;
 class Keys extends Request
 {
 	use SubArrayAwareTrait;
+	use LoadTrait;
 	const URL_API = 'projects/:project_id/keys/';
 
 	/**
@@ -138,21 +139,11 @@ class Keys extends Request
 	}
 
 	/**
-	 * @return array
-	 * @see http://docs.phraseapp.com/api/v2/keys/#index
+	 * @return string
 	 */
-	protected function load()
+	protected function getUrlApi()
 	{
-		try
-		{
-			$response = $this->methodGet(self::URL_API);
-		}
-		catch (BaseException $exception)
-		{
-			$response = [];
-		}
-
-		return $response;
+		return self::URL_API;
 	}
 
 	/**

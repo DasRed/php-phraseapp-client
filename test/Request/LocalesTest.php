@@ -98,30 +98,15 @@ class LocalesTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::load
+	 * @covers ::getUrlApi
 	 */
-	public function testLoadSuccess()
+	public function testGetUrlApi()
 	{
-		$locales = $this->getMockBuilder(Locales::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$locales->expects($this->once())->method('methodGet')->with(Locales::URL_API)->willReturn([['code' => 'a'], ['code' => 'b']]);
+		$translations = new Locales($this->config);
 
-		$reflectionMethod = new \ReflectionMethod($locales, 'load');
+		$reflectionMethod = new \ReflectionMethod($translations, 'getUrlApi');
 		$reflectionMethod->setAccessible(true);
 
-		$this->assertEquals([['code' => 'a'], ['code' => 'b']], $reflectionMethod->invoke($locales));
-	}
-
-	/**
-	 * @covers ::load
-	 */
-	public function testLoadFailed()
-	{
-		$locales = $this->getMockBuilder(Locales::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$locales->expects($this->once())->method('methodGet')->with(Locales::URL_API)->willThrowException(new \DasRed\PhraseApp\Exception());
-
-		$reflectionMethod = new \ReflectionMethod($locales, 'load');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([], $reflectionMethod->invoke($locales));
+		$this->assertEquals(Locales::URL_API, $reflectionMethod->invoke($translations));
 	}
 }

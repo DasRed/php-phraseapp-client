@@ -298,38 +298,16 @@ class KeysTest extends \PHPUnit_Framework_TestCase
 		$this->assertSame('name', $reflectionMethod->invoke($keys));
 	}
 
-
 	/**
-	 * @covers ::load
+	 * @covers ::getUrlApi
 	 */
-	public function testLoadSuccess()
+	public function testGetUrlApi()
 	{
-		$keys = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$keys->expects($this->once())->method('methodGet')->with(Keys::URL_API)->willReturn([
-			['name' => 'abc'],
-			['name' => 'a/b/c'],
-		]);
+		$translations = new Keys($this->config);
 
-		$reflectionMethod = new \ReflectionMethod($keys, 'load');
+		$reflectionMethod = new \ReflectionMethod($translations, 'getUrlApi');
 		$reflectionMethod->setAccessible(true);
 
-		$this->assertEquals([
-			['name' => 'abc'],
-			['name' => 'a/b/c'],
-		], $reflectionMethod->invoke($keys));
-	}
-
-	/**
-	 * @covers ::load
-	 */
-	public function testLoadFailed()
-	{
-		$keys = $this->getMockBuilder(Keys::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$keys->expects($this->once())->method('methodGet')->with(Keys::URL_API)->willThrowException(new \DasRed\PhraseApp\Exception());
-
-		$reflectionMethod = new \ReflectionMethod($keys, 'load');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([], $reflectionMethod->invoke($keys));
+		$this->assertEquals(Keys::URL_API, $reflectionMethod->invoke($translations));
 	}
 }

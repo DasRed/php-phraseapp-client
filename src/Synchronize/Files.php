@@ -52,14 +52,11 @@ class Files extends Synchronize
 	{
 		$this->read();
 
-		if (parent::synchronize() === false)
-		{
-			return false;
-		}
+		parent::synchronize();
 
 		$this->write();
 
-		return true;
+		return $this;
 	}
 
 	/**

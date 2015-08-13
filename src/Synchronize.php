@@ -188,24 +188,14 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 	/**
 	 *
-	 * @return boolean
+	 * @return self
 	 */
 	public function synchronize()
 	{
 		$this->log('Synchronizing translations');
 
 		// sync translation content
-		try
-		{
-			$this->synchronizeLocales()->synchronizeKeys()->synchronizeCleanUpKeys()->synchronizeContent();
-		}
-		catch (Exception $exception)
-		{
-			$this->log('FAILURE: ' . $exception->getMessage(), Logger::ERR);
-			return false;
-		}
-
-		return true;
+		return $this->synchronizeLocales()->synchronizeKeys()->synchronizeCleanUpKeys()->synchronizeContent();
 	}
 
 	/**
@@ -290,6 +280,11 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 			$countDifferencesRemote += $countLocalToStore;
 			if ($countLocalToStore != 0)
 			{
+				$count = count($keysLocalToStore);
+				$index = 0;
+				$this->log($locale . ': ' . $index . ' / ' . $count, Logger::DEBUG, [
+					'writeLine' => false
+				]);
 				foreach ($keysLocalToStore as $keyLocalToStore)
 				{
 					// add the "new" tag to key if new in defaultlocale
@@ -304,7 +299,17 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 					{
 						throw new FailureStoreContent($keyLocalToStore);
 					}
+
+					// write to log
+					$this->log(str_repeat(chr(8), strlen($index . ' / ' . $count)), Logger::DEBUG, [
+						'writeLine' => false
+					]);
+					$index++;
+					$this->log($index . ' / ' . $count, Logger::DEBUG, [
+						'writeLine' => false
+					]);
 				}
+				$this->log(' Done');
 			}
 		}
 
@@ -332,20 +337,36 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 		// create keys
 		$count = count($keysToCreate);
-		$this->log('Found ' . $count . ' keys to create');
 		if ($count != 0)
 		{
+			$index = 0;
+			$this->log('Found ' . $count . ' keys to create: ' . $index . ' / ' . $count, Logger::DEBUG, [
+				'writeLine' => false
+			]);
 			foreach ($keysToCreate as $keyToCreate)
 			{
 				$this->synchronizeKeysCreateKey($keyToCreate);
+
+				// write to log
+				$this->log(str_repeat(chr(8), strlen($index . ' / ' . $count)), Logger::DEBUG, [
+					'writeLine' => false
+				]);
+				$index++;
+				$this->log($index . ' / ' . $count, Logger::DEBUG, [
+					'writeLine' => false
+				]);
 			}
+			$this->log(' Done');
 		}
 
 		// delete keys
 		$count = count($keysToDelete);
-		$this->log('Found ' . $count . ' keys to delete');
 		if ($count != 0)
 		{
+			$index = 0;
+			$this->log('Found ' . $count . ' keys to delete: ' . $index . ' / ' . $count, Logger::DEBUG, [
+				'writeLine' => false
+			]);
 			foreach ($keysToDelete as $keyToDelete)
 			{
 				if ($this->getPhraseAppKeys()->delete($keyToDelete) === false)
@@ -354,7 +375,17 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 				}
 
 				$this->removeTranslationKeyFromAllLocales($keyToDelete);
+
+				// write to log
+				$this->log(str_repeat(chr(8), strlen($index . ' / ' . $count)), Logger::DEBUG, [
+					'writeLine' => false
+				]);
+				$index++;
+				$this->log($index . ' / ' . $count, Logger::DEBUG, [
+					'writeLine' => false
+				]);
 			}
+			$this->log(' Done');
 		}
 
 		return $this;

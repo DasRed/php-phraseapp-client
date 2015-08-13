@@ -120,22 +120,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$files->expects($this->any())->method('synchronizeKeys')->willReturnSelf();
 		$files->expects($this->any())->method('synchronizeContent')->willReturnSelf();
 
-		$this->assertTrue($files->synchronize());
-	}
-
-	/**
-	 * @covers ::synchronize
-	 */
-	public function testSynchronizeFailed()
-	{
-		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config])->getMock();
-		$files->expects($this->once())->method('read')->with()->willReturnSelf();
-		$files->expects($this->never())->method('write')->with()->willReturnSelf();
-		$files->expects($this->any())->method('synchronizeLocales')->willThrowException(new \DasRed\PhraseApp\Exception());
-		$files->expects($this->any())->method('synchronizeKeys')->willReturnSelf();
-		$files->expects($this->any())->method('synchronizeContent')->willReturnSelf();
-
-		$this->assertFalse($files->synchronize());
+		$this->assertSame($files, $files->synchronize());
 	}
 
 	/**

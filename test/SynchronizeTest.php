@@ -231,22 +231,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$syncD->expects($this->never())->method('synchronizeCleanUpKeys');
 		$syncD->expects($this->once())->method('synchronizeContent')->with()->willReturn($syncA);
 
-		$this->assertTrue($syncA->synchronize());
-	}
-
-	/**
-	 * @covers ::synchronize
-	 */
-	public function testSynchronizeFailed()
-	{
-		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config])->getMock();
-
-		$sync->expects($this->once())->method('synchronizeLocales')->with()->willThrowException(new \DasRed\PhraseApp\Exception());
-		$sync->expects($this->never())->method('synchronizeKeys');
-		$sync->expects($this->never())->method('synchronizeContent');
-
-		$this->assertFalse($sync->synchronize());
-		$this->assertCount(2, $this->writer->events);
+		$this->assertSame($syncA, $syncA->synchronize());
 	}
 
 	/**

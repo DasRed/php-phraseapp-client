@@ -247,30 +247,15 @@ class TranslationsTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * @covers ::load
+	 * @covers ::getUrlApi
 	 */
-	public function testLoadSuccess()
+	public function testGetUrlApi()
 	{
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodGet')->with(Translations::URL_API)->willReturn([['id' => 'a'], ['id' => 'b']]);
+		$translations = new Translations($this->config);
 
-		$reflectionMethod = new \ReflectionMethod($translations, 'load');
+		$reflectionMethod = new \ReflectionMethod($translations, 'getUrlApi');
 		$reflectionMethod->setAccessible(true);
 
-		$this->assertEquals([['id' => 'a'], ['id' => 'b']], $reflectionMethod->invoke($translations));
-	}
-
-	/**
-	 * @covers ::load
-	 */
-	public function testLoadFailed()
-	{
-		$translations = $this->getMockBuilder(Translations::class)->setMethods(['methodGet'])->setConstructorArgs([$this->config])->getMock();
-		$translations->expects($this->once())->method('methodGet')->with(Translations::URL_API)->willThrowException(new \DasRed\PhraseApp\Exception());
-
-		$reflectionMethod = new \ReflectionMethod($translations, 'load');
-		$reflectionMethod->setAccessible(true);
-
-		$this->assertEquals([], $reflectionMethod->invoke($translations));
+		$this->assertEquals(Translations::URL_API, $reflectionMethod->invoke($translations));
 	}
 }

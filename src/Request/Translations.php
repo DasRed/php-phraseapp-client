@@ -14,6 +14,7 @@ class Translations extends Request implements KeysAwareInterface, LocalesAwareIn
 	use KeysAwareTrait;
 	use LocalesAwareTrait;
 	use SubArrayAwareTrait;
+	use LoadTrait;
 	const URL_API = 'projects/:project_id/translations/';
 
 	/**
@@ -76,21 +77,11 @@ class Translations extends Request implements KeysAwareInterface, LocalesAwareIn
 	}
 
 	/**
-	 * @return array
-	 * @see http://docs.phraseapp.com/api/v2/translations/#index
+	 * @return string
 	 */
-	protected function load()
+	protected function getUrlApi()
 	{
-		try
-		{
-			$response = $this->methodGet(self::URL_API);
-		}
-		catch (BaseException $exception)
-		{
-			$response = [];
-		}
-
-		return $response;
+		return self::URL_API;
 	}
 
 	/**
