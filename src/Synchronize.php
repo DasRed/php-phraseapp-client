@@ -423,6 +423,12 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		$localesToCreateRemote = array_diff($localesLocal, $localesRemote);
 		$localesToCreateLocale = array_diff($localesRemote, $localesLocal);
 
+		$localeSource = null;
+		if ($this->getConfig()->getUseLocaleDefaultAsLocaleSource() === true)
+		{
+			$localeSource = $this->getConfig()->getLocaleDefault();
+		}
+
 		// create locales remote
 		$count = count($localesToCreateRemote);
 		$this->log('Found ' . $count . ' locales to create remote');
@@ -430,7 +436,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		{
 			foreach ($localesToCreateRemote as $localeToCreateRemote)
 			{
-				if ($this->getPhraseAppLocales()->create($localeToCreateRemote) === false)
+				if ($this->getPhraseAppLocales()->create($localeToCreateRemote, $localeSource) === false)
 				{
 					throw new FailureAddLocale($localeToCreateRemote);
 				}

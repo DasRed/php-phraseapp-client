@@ -30,7 +30,7 @@ class LocalesTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::create
 	 */
-	public function testCreateSuccess()
+	public function testCreateSuccessWithoutLocaleSource()
 	{
 		$locales = $this->getMockBuilder(Locales::class)->setMethods(['load', 'methodPost'])->setConstructorArgs([$this->config])->getMock();
 		$locales->expects($this->any())->method('load')->with()->willReturn([]);
@@ -42,6 +42,42 @@ class LocalesTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertTrue($locales->create('de-DE'));
 		$this->assertCount(1, $locales->getCollection());
+		$this->assertEquals(['name' => 'de-DE', 'code' => 'de-DE', 'id' => '43q2iohf89rwrt'], $locales->getCollection()->get('de-DE'));
+	}
+
+	/**
+	 * @covers ::create
+	 */
+	public function testCreateSuccessWithNotExistingLocaleSource()
+	{
+		$locales = $this->getMockBuilder(Locales::class)->setMethods(['load', 'methodPost'])->setConstructorArgs([$this->config])->getMock();
+		$locales->expects($this->any())->method('load')->with()->willReturn([]);
+		$locales->expects($this->once())->method('methodPost')->with(Locales::URL_API,
+			['name' => 'de-DE', 'code' => 'de-DE', 'source_locale_id' => 'en-GB']
+		)->willReturn(
+			['name' => 'de-DE', 'code' => 'de-DE', 'id' => '43q2iohf89rwrt']
+		);
+
+		$this->assertTrue($locales->create('de-DE', 'en-GB'));
+		$this->assertCount(1, $locales->getCollection());
+		$this->assertEquals(['name' => 'de-DE', 'code' => 'de-DE', 'id' => '43q2iohf89rwrt'], $locales->getCollection()->get('de-DE'));
+	}
+
+	/**
+	 * @covers ::create
+	 */
+	public function testCreateSuccessWithExistingLocaleSource()
+	{
+		$locales = $this->getMockBuilder(Locales::class)->setMethods(['load', 'methodPost'])->setConstructorArgs([$this->config])->getMock();
+		$locales->expects($this->any())->method('load')->with()->willReturn([['code' => 'a', 'id' => '43q2iohf89rwrt'], ['code' => 'b']]);
+		$locales->expects($this->once())->method('methodPost')->with(Locales::URL_API,
+			['name' => 'de-DE', 'code' => 'de-DE', 'source_locale_id' => '43q2iohf89rwrt']
+		)->willReturn(
+			['name' => 'de-DE', 'code' => 'de-DE', 'id' => '43q2iohf89rwrt']
+		);
+
+		$this->assertTrue($locales->create('de-DE', 'a'));
+		$this->assertCount(3, $locales->getCollection());
 		$this->assertEquals(['name' => 'de-DE', 'code' => 'de-DE', 'id' => '43q2iohf89rwrt'], $locales->getCollection()->get('de-DE'));
 	}
 

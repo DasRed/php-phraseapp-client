@@ -206,4 +206,19 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 		$this->setExpectedException(ProjectIdCanNotBeEmpty::class);
 		$config->setProjectId($value);
 	}
+
+	/**
+	 * @covers ::getUseLocaleDefaultAsLocaleSource
+	 * @covers ::setUseLocaleDefaultAsLocaleSource
+	 */
+	public function testGetSetUseLocaleDefaultAsLocaleSource()
+	{
+		$config = new Config('pp', 'a', 'de');
+
+		$this->assertTrue($config->getUseLocaleDefaultAsLocaleSource());
+		$this->assertSame($config, $config->setUseLocaleDefaultAsLocaleSource(false));
+		$this->assertFalse($config->getUseLocaleDefaultAsLocaleSource());
+		$this->assertSame($config, $config->setUseLocaleDefaultAsLocaleSource(true));
+		$this->assertTrue($config->getUseLocaleDefaultAsLocaleSource());
+	}
 }

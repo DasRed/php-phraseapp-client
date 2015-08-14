@@ -64,6 +64,11 @@ class Config
 	protected $tagForContentChangeFromLocalToRemote = 'newContent';
 
 	/**
+	 * @var bool
+	 */
+	protected $useLocaleDefaultAsLocaleSource = true;
+
+	/**
 	 *
 	 * @param string $projectId
 	 * @param string $accessToken
@@ -71,9 +76,7 @@ class Config
 	 */
 	public function __construct($projectId, $accessToken, $localeDefault)
 	{
-		$this->setProjectId($projectId)
-			->setAccessToken($accessToken)
-			->setLocaleDefault($localeDefault);
+		$this->setProjectId($projectId)->setAccessToken($accessToken)->setLocaleDefault($localeDefault);
 	}
 
 	/**
@@ -135,6 +138,14 @@ class Config
 	public function getTagForContentChangeFromLocalToRemote()
 	{
 		return $this->tagForContentChangeFromLocalToRemote;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function getUseLocaleDefaultAsLocaleSource()
+	{
+		return $this->useLocaleDefaultAsLocaleSource;
 	}
 
 	/**
@@ -248,6 +259,17 @@ class Config
 	public function setTagForContentChangeFromLocalToRemote($tagForContentChangeFromLocalToRemote)
 	{
 		$this->tagForContentChangeFromLocalToRemote = $tagForContentChangeFromLocalToRemote;
+
+		return $this;
+	}
+
+	/**
+	 * @param bool $useLocaleDefaultAsLocaleSource
+	 * @return self
+	 */
+	public function setUseLocaleDefaultAsLocaleSource($useLocaleDefaultAsLocaleSource)
+	{
+		$this->useLocaleDefaultAsLocaleSource = (bool)$useLocaleDefaultAsLocaleSource;
 
 		return $this;
 	}

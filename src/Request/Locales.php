@@ -21,14 +21,26 @@ class Locales extends Request
 	 * @return boolean
 	 * @see http://docs.phraseapp.com/api/v2/locales/#create
 	 */
-	public function create($locale)
+	public function create($locale, $localeSource = null)
 	{
 		try
 		{
-			$result = $this->methodPost(self::URL_API, [
+			$parameters = [
 				'name' => $locale,
 				'code' => $locale
-			]);
+			];
+
+			if ($localeSource !== null)
+			{
+				$parameters['source_locale_id'] = $localeSource;
+				$localeSource = $this->getCollection()->get($localeSource);
+				if ($localeSource !== null)
+				{
+					$parameters['source_locale_id'] = $localeSource['id'];
+				}
+			}
+
+			$result = $this->methodPost(self::URL_API, $parameters);
 
 			$this->getCollection()->append($result);
 		}

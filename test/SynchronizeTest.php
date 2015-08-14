@@ -615,7 +615,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::synchronizeLocales
 	 */
-	public function testSynchronizeLocalesSuccess()
+	public function testSynchronizeLocalesSuccessWithUseLocaleSource()
 	{
 		$localesLocale = ['de', 'en', 'ru'];
 		$localesRemote = ['de', 'fr', 'us'];
@@ -624,7 +624,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 
 		$phraseLocales = $this->getMockBuilder(Locales::class)->setMethods(['fetch', 'create'])->disableOriginalConstructor()->getMock();
 		$phraseLocales->expects($this->once())->method('fetch')->with()->willReturn($localesRemote);
-		$phraseLocales->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['ru'])->willReturn(true);
+		$phraseLocales->expects($this->exactly(2))->method('create')->withConsecutive(['en', 'de'], ['ru', 'de'])->willReturn(true);
 
 		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseAppLocales', 'getTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
@@ -647,7 +647,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::synchronizeLocales
 	 */
-	public function testSynchronizeLocalesFailed()
+	public function testSynchronizeLocalesFailedWithUseLocaleSource()
 	{
 		$localesLocale = ['de', 'en', 'ru'];
 		$localesRemote = ['de', 'fr', 'us'];
@@ -656,7 +656,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 
 		$phraseLocales = $this->getMockBuilder(Locales::class)->setMethods(['fetch', 'create'])->disableOriginalConstructor()->getMock();
 		$phraseLocales->expects($this->once())->method('fetch')->with()->willReturn($localesRemote);
-		$phraseLocales->expects($this->once())->method('create')->withConsecutive(['en'], ['ru'])->willReturn(false);
+		$phraseLocales->expects($this->once())->method('create')->withConsecutive(['en', 'de'], ['ru', 'de'])->willReturn(false);
 
 		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseAppLocales', 'getTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
 		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
@@ -674,6 +674,71 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals([], $reflectionProperty->getValue($sync));
 	}
 
+	/**
+	 * @covers ::synchronizeLocales
+	 */
+	public function testSynchronizeLocalesSuccessWithoutUseLocaleSource()
+	{
+		$this->config->setUseLocaleDefaultAsLocaleSource(false);
+
+		$localesLocale = ['de', 'en', 'ru'];
+		$localesRemote = ['de', 'fr', 'us'];
+
+		$translations = ['a' => '1', 'b' => '2', 'de' => '4'];
+
+		$phraseLocales = $this->getMockBuilder(Locales::class)->setMethods(['fetch', 'create'])->disableOriginalConstructor()->getMock();
+		$phraseLocales->expects($this->once())->method('fetch')->with()->willReturn($localesRemote);
+		$phraseLocales->expects($this->exactly(2))->method('create')->withConsecutive(['en', null], ['ru', null])->willReturn(true);
+
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseAppLocales', 'getTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
+		$sync->expects($this->exactly(3))->method('getPhraseAppLocales')->with()->willReturn($phraseLocales);
+		$sync->expects($this->once())->method('getTranslations')->with('de')->willReturn($translations);
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeLocales');
+		$reflectionMethod->setAccessible(true);
+
+		$reflectionProperty = new \ReflectionProperty($sync, 'translations');
+		$reflectionProperty->setAccessible(true);
+
+		$this->assertSame($sync, $reflectionMethod->invoke($sync));
+		$this->assertEquals([
+			'fr' => ['a' => '', 'b' => '', 'de' => ''],
+			'us' => ['a' => '', 'b' => '', 'de' => ''],
+		], $reflectionProperty->getValue($sync));
+	}
+
+	/**
+	 * @covers ::synchronizeLocales
+	 */
+	public function testSynchronizeLocalesFailedWithoutUseLocaleSource()
+	{
+		$this->config->setUseLocaleDefaultAsLocaleSource(false);
+
+		$localesLocale = ['de', 'en', 'ru'];
+		$localesRemote = ['de', 'fr', 'us'];
+
+		$translations = ['a' => '1', 'b' => '2', 'de' => '4'];
+
+		$phraseLocales = $this->getMockBuilder(Locales::class)->setMethods(['fetch', 'create'])->disableOriginalConstructor()->getMock();
+		$phraseLocales->expects($this->once())->method('fetch')->with()->willReturn($localesRemote);
+		$phraseLocales->expects($this->once())->method('create')->withConsecutive(['en', null], ['ru', null])->willReturn(false);
+
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getTranslationLocales', 'getPhraseAppLocales', 'getTranslations'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
+		$sync->expects($this->exactly(2))->method('getPhraseAppLocales')->with()->willReturn($phraseLocales);
+		$sync->expects($this->never())->method('getTranslations');
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeLocales');
+		$reflectionMethod->setAccessible(true);
+
+		$reflectionProperty = new \ReflectionProperty($sync, 'translations');
+		$reflectionProperty->setAccessible(true);
+
+		$this->setExpectedException(FailureAddLocale::class);
+		$reflectionMethod->invoke($sync);
+		$this->assertEquals([], $reflectionProperty->getValue($sync));
+	}
 	/**
 	 * @covers ::synchronizeKeysCreateKey
 	 */

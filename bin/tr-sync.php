@@ -27,6 +27,7 @@ $opt = (new Getopt([
 	'preferDirection|d-s' => 'prefer direction for sync (remote, local). Default: remote',
 	'exclude|x-s' => 'regex to exclude files. can be given multiple times: Default: []',
 	'tagForContentChangeFromLocalToRemote|t-s' => 'tag for content change from local to remote. Default: newContent',
+	'doNotUseLocaleDefaultAsLocaleSource|u' => 'do not use the default locale also as source locale.',
 
 	'help|h' => 'Display this help message',
 	'quiet|q' => 'Do not output any message',
@@ -68,6 +69,12 @@ try
 	if ($opt->tagForContentChangeFromLocalToRemote)
 	{
 		$config->setTagForContentChangeFromLocalToRemote($opt->tagForContentChangeFromLocalToRemote);
+	}
+
+	// set doNotUseLocaleDefaultAsLocaleSource
+	if ($opt->doNotUseLocaleDefaultAsLocaleSource)
+	{
+		$config->setUseLocaleDefaultAsLocaleSource(false);
 	}
 }
 catch (\Exception $exception)
