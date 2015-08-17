@@ -36,8 +36,10 @@ class CreateTest extends \PHPUnit_Framework_TestCase
 	public function dataProviderExecute()
 	{
 		return [
+			[['abc', 'de'], true],
 			[['abc'], true],
 			[['abc'], false],
+			[['abc', 'de'], false],
 		];
 	}
 
@@ -47,8 +49,12 @@ class CreateTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testExecute($arguments, $expected)
 	{
+		$temp = $arguments;
+		$locale = array_shift($temp);
+		$localeSource = array_shift($temp);
+
 		$requester = $this->getMockBuilder(Locales::class)->setMethods(['create'])->setConstructorArgs([$this->config])->getMock();
-		$requester->expects($this->once())->method('create')->with($arguments[0])->willReturn($expected);
+		$requester->expects($this->once())->method('create')->with($locale, $localeSource)->willReturn($expected);
 
 		$exec = new Create($this->config, $this->console, $arguments);
 		$exec->setPhraseAppLocales($requester);
@@ -56,11 +62,11 @@ class CreateTest extends \PHPUnit_Framework_TestCase
 		$this->console->expects($this->never())->method('write');
 		if ($expected === true)
 		{
-			$this->console->expects($this->once())->method('writeLine')->with('Locale ' . $arguments[0] . ' created.', ColorInterface::BLACK, ColorInterface::LIGHT_GREEN);
+			$this->console->expects($this->once())->method('writeLine')->with('Locale ' . $locale . ' created.', ColorInterface::BLACK, ColorInterface::LIGHT_GREEN);
 		}
 		else
 		{
-			$this->console->expects($this->once())->method('writeLine')->with('Locale ' . $arguments[0] . ' can not be created.', ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED);
+			$this->console->expects($this->once())->method('writeLine')->with('Locale ' . $locale . ' can not be created.', ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED);
 		}
 
 		$this->assertSame($expected, $exec->execute());
@@ -69,7 +75,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
 	public function dataProviderValidateArguments()
 	{
 		return [
-			[['a', 'b'], false],
+			[['a', 'b'], true],
 			[['', 'b'], false],
 			[['a', ''], false],
 			[['a'], true],

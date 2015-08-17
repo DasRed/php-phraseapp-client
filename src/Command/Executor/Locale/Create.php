@@ -13,9 +13,11 @@ class Create extends LocaleAbstract
 	 */
 	public function execute()
 	{
-		$locale = $this->getArguments()[0];
+		$arguments = $this->getArguments();
+		$locale = array_shift($arguments);
+		$localeSource = array_shift($arguments);
 
-		if ($this->getPhraseAppLocales()->create($locale) === false)
+		if ($this->getPhraseAppLocales()->create($locale, $localeSource) === false)
 		{
 			$this->getConsole()->writeLine('Locale ' . $locale . ' can not be created.', ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED);
 			return false;
@@ -32,7 +34,7 @@ class Create extends LocaleAbstract
 	 */
 	protected function validateArguments($arguments)
 	{
-		if (count($arguments) !== 1)
+		if (count($arguments) < 1 || count($arguments) > 2)
 		{
 			return false;
 		}

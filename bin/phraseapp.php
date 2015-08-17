@@ -32,8 +32,8 @@ $message = 'operation' . PHP_EOL;
 $message .= PHP_EOL;
 
 $message .= $console->colorize('locale Operations:', ColorInterface::YELLOW) . PHP_EOL;
-$message .= $console->colorize(' locale create <locale>', ColorInterface::GREEN) . '   creates the given locale.' . PHP_EOL;
-$message .= $console->colorize(' locale list', ColorInterface::GREEN) . '              list all locales' . PHP_EOL;
+$message .= $console->colorize(' locale create <locale> [localeSource]', ColorInterface::GREEN) . '   creates the given locale.' . PHP_EOL;
+$message .= $console->colorize(' locale list', ColorInterface::GREEN) . '                             list all locales' . PHP_EOL;
 
 $message .= PHP_EOL;
 $message .= $console->colorize('key Operations:', ColorInterface::YELLOW) . PHP_EOL;
