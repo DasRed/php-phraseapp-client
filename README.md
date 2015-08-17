@@ -3,13 +3,14 @@
 PHP PhraseApp Client for [PhraseApp](https://phraseapp.com) and [API Version 2](http://docs.phraseapp.com/api/v2/).
 
 # CLI Usage
-## Usage
+## tr-sync
+### Usage
 bin/tr-sync [options] sourcePath
 
-## Arguments
+### Arguments
 sourcePath           Path to search in.
 
-## Options
+### Options
 ```
 --projectId (-p) <string>                                 project id
 --accessToken (-a) <string>                               user access token
@@ -23,6 +24,41 @@ sourcePath           Path to search in.
 --version (-V)                                            Display this application version
 ```
 
+## phraseapp
+
+### Usage
+bin/phraseapp [options] operation
+
+### Locale Operations
+```
+ locale create <locale> [localeSource]   creates the given locale.
+ locale list                             list all locales
+```
+
+### Key Operations
+```
+ key addTag <key> <tag>                            add the tag to the key.
+ key create <name> [description] [tag ...]         create a new key.
+ key delete <key>                                  deletes the key.
+ key list                                          list the key.
+ key update <key> <name> [description] [tag ...]   updates the key.
+```
+
+### Translation Operations
+```
+ translation store <locale> <key> <content>   set content of a key for a locale.
+```
+
+### Options
+```
+ --projectId (-p) <string>            project id
+ --accessToken (-a) <string>          user access token
+ --localeDefault (-l) <string>        default locale. Default de-DE
+ --applicationName (-n) [ <string> ]  name of your application. Default PHP PhraseApp Client
+ --help (-h)                          Display this help message
+ --version (-V)                       Display this application version
+ ```
+ 
 # PHP Usage for Synchronize
 ```php
 use DasRed\Zend\Log\Writer\Console as Writer;
@@ -30,7 +66,6 @@ use DasRed\Zend\Log\Logger\Console as Logger;
 use Zend\Console\Console;
 use DasRed\PhraseApp\Synchronize\Files\Type\Php;
 use DasRed\PhraseApp\Synchronize\Files;
-use DasRed\PhraseApp\Synchronize;
 use DasRed\PhraseApp\Config;
 
 // create logger
@@ -48,7 +83,7 @@ $config = new Config($projectId, $accessToken, $localeDefault);
 $config->setApplicationName('Fancy Application Name (nuff@example.com)');
 
 // set the direction, which is prefered. If all from PhraseApp is always correct, then REMOTE ist prefered. Otherwise LOCAL
-$config->setPreferDirection(Synchronize::PREFER_REMOTE);
+$config->setPreferDirection(Config::PREFER_REMOTE);
 
 // set a default translation key tag which will be setted on translations keys, which will be written to phraseapp
 $config->setTagForContentChangeFromLocalToRemote('newContent');
