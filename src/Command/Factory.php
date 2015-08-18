@@ -18,6 +18,7 @@ class Factory implements ConfigAwareInterface, ConsoleAwareInterface
 	/**
 	 *
 	 * @param Config $config
+	 * @param AdapterInterface $console
 	 */
 	public function __construct(Config $config, AdapterInterface $console)
 	{
