@@ -6,19 +6,22 @@ use DasRed\PhraseApp\Synchronize\Exception\FailureDeleteKey;
 use DasRed\PhraseApp\Synchronize\Exception\FailureAddLocale;
 use DasRed\PhraseApp\Synchronize\Exception\FailureStoreContent;
 use DasRed\PhraseApp\Synchronize\Exception\FailureStoreContentByTag;
-use DasRed\Zend\Log\LoggerAwareTrait;
-use Zend\Log\Logger;
-use Zend\Log\LoggerAwareInterface;
 use DasRed\PhraseApp\Request\KeysAwareInterface;
 use DasRed\PhraseApp\Request\LocalesAwareInterface;
 use DasRed\PhraseApp\Request\TranslationsAwareInterface;
 use DasRed\PhraseApp\Request\KeysAwareTrait;
 use DasRed\PhraseApp\Request\LocalesAwareTrait;
 use DasRed\PhraseApp\Request\TranslationsAwareTrait;
+use DasRed\Zend\Console\ConsoleAwareInterface;
+use DasRed\Zend\Console\ConsoleAwareTrait;
+use Zend\Console\Adapter\AdapterInterface;
+use Zend\ProgressBar\ProgressBar;
+use Zend\ProgressBar\Adapter\Console;
+use Zend\Console\ColorInterface;
 
-class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwareInterface, LocalesAwareInterface, TranslationsAwareInterface
+class Synchronize implements ConsoleAwareInterface, ConfigAwareInterface, KeysAwareInterface, LocalesAwareInterface, TranslationsAwareInterface
 {
-	use LoggerAwareTrait;
+	use ConsoleAwareTrait;
 	use ConfigAwareTrait;
 	use KeysAwareTrait;
 	use LocalesAwareTrait;
@@ -33,12 +36,12 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 	/**
 	 *
-	 * @param Logger $logger
+	 * @param AdapterInterface $console
 	 * @param Config $config
 	 */
-	public function __construct(Logger $logger, Config $config)
+	public function __construct(AdapterInterface $console, Config $config)
 	{
-		$this->setLogger($logger)->setConfig($config);
+		$this->setConsole($console)->setConfig($config);
 	}
 
 	/**
@@ -150,6 +153,29 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 	/**
 	 *
+	 * @param int $count
+	 * @return ProgressBar
+	 */
+	protected function getProgressBar($count)
+	{
+		$progressBar = new ProgressBar($this->getProgressBarAdapter(), 0, $count);
+		$progressBar->update(0);
+
+		return $progressBar;
+	}
+
+	/**
+	 * @return Console
+	 */
+	protected function getProgressBarAdapter()
+	{
+		return new Console([
+			'finishAction' => Console::FINISH_ACTION_CLEAR_LINE
+		]);
+	}
+
+	/**
+	 *
 	 * @param string $locale
 	 * @return array
 	 */
@@ -192,8 +218,6 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 	 */
 	public function synchronize()
 	{
-		$this->log('Synchronizing translations');
-
 		// sync translation content
 		return $this->synchronizeLocales()->synchronizeKeys()->synchronizeCleanUpKeys()->synchronizeContent();
 	}
@@ -235,10 +259,11 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		$countPerLocale = count($this->getKeys($this->getConfig()->getLocaleDefault()));
 		$count = count($locales) * $countPerLocale;
 
-		$this->log('Fetching full translation contents');
+		$this->getConsole()->write('Fetching full translation contents: ');
 		$contentRemoteCompleteByLocale = $this->getPhraseAppTranslations()->fetch();
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
-		$this->log('Updating translation contents');
+		$this->getConsole()->writeLine('Updating translation contents');
 		$countDifferencesLocal = 0;
 		$countDifferencesRemote = 0;
 
@@ -281,10 +306,11 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 			if ($countLocalToStore != 0)
 			{
 				$count = count($keysLocalToStore);
-				$index = 0;
-				$this->log($locale . ': ' . $index . ' / ' . $count, Logger::DEBUG, [
-					'writeLine' => false
-				]);
+				$this->getConsole()->write('  ' . $locale . ': ');
+				$this->getConsole()->write(number_format($count, 0, ',', '.') . ' ', ColorInterface::GREEN);
+
+				$progressBar = $this->getProgressBar($count);
+
 				foreach ($keysLocalToStore as $keyLocalToStore)
 				{
 					// add the "new" tag to key if new in defaultlocale
@@ -300,20 +326,19 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 						throw new FailureStoreContent($keyLocalToStore);
 					}
 
-					// write to log
-					$this->log(str_repeat(chr(8), strlen($index . ' / ' . $count)), Logger::DEBUG, [
-						'writeLine' => false
-					]);
-					$index++;
-					$this->log($index . ' / ' . $count, Logger::DEBUG, [
-						'writeLine' => false
-					]);
+					$progressBar->next();
 				}
-				$this->log(' Done');
+				$progressBar->finish();
+
+				$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 			}
 		}
 
-		$this->log('Found ' . number_format($countDifferencesLocal, 0, ',', '.') . ' local and ' . number_format($countDifferencesRemote, 0, ',', '.') . ' remote differences');
+		$this->getConsole()->write('Found ');
+		$this->getConsole()->write(number_format($countDifferencesLocal, 0, ',', '.'), ColorInterface::LIGHT_GREEN);
+		$this->getConsole()->write(' local and ');
+		$this->getConsole()->write(number_format($countDifferencesRemote, 0, ',', '.'), ColorInterface::LIGHT_GREEN);
+		$this->getConsole()->writeLine(' remote differences');
 
 		return $this;
 	}
@@ -328,7 +353,7 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 		$keysLocal = array_keys($this->getTranslations($this->getConfig()->getLocaleDefault()));
 
 		// fetching the list of current translation keys in PhraseApp
-		$this->log('Fetching keys from PhraseApp');
+		$this->getConsole()->write('Fetching remote keys: ');
 		$keysRemote = $this->getPhraseAppKeys()->fetch();
 
 		// find keys for sync
@@ -337,36 +362,26 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 		// create keys
 		$count = count($keysToCreate);
+		$this->getConsole()->write(number_format($count, 0, ',', '.') . 'x ', ColorInterface::GREEN);
 		if ($count != 0)
 		{
-			$index = 0;
-			$this->log('Found ' . $count . ' keys to create: ' . $index . ' / ' . $count, Logger::DEBUG, [
-				'writeLine' => false
-			]);
+			$progressBar = $this->getProgressBar($count);
 			foreach ($keysToCreate as $keyToCreate)
 			{
 				$this->synchronizeKeysCreateKey($keyToCreate);
-
-				// write to log
-				$this->log(str_repeat(chr(8), strlen($index . ' / ' . $count)), Logger::DEBUG, [
-					'writeLine' => false
-				]);
-				$index++;
-				$this->log($index . ' / ' . $count, Logger::DEBUG, [
-					'writeLine' => false
-				]);
+				$progressBar->next();
 			}
-			$this->log(' Done');
+			$progressBar->finish();
 		}
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
 		// delete keys
 		$count = count($keysToDelete);
+		$this->getConsole()->write('Keys to delete: ');
+		$this->getConsole()->write(number_format($count, 0, ',', '.') . 'x ', ColorInterface::GREEN);
 		if ($count != 0)
 		{
-			$index = 0;
-			$this->log('Found ' . $count . ' keys to delete: ' . $index . ' / ' . $count, Logger::DEBUG, [
-				'writeLine' => false
-			]);
+			$progressBar = $this->getProgressBar($count);
 			foreach ($keysToDelete as $keyToDelete)
 			{
 				if ($this->getPhraseAppKeys()->delete($keyToDelete) === false)
@@ -376,17 +391,12 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 				$this->removeTranslationKeyFromAllLocales($keyToDelete);
 
-				// write to log
-				$this->log(str_repeat(chr(8), strlen($index . ' / ' . $count)), Logger::DEBUG, [
-					'writeLine' => false
-				]);
-				$index++;
-				$this->log($index . ' / ' . $count, Logger::DEBUG, [
-					'writeLine' => false
-				]);
+				$progressBar->next();
 			}
-			$this->log(' Done');
+			$progressBar->finish();
 		}
+
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
 		return $this;
 	}
@@ -412,10 +422,11 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 	 */
 	protected function synchronizeLocales()
 	{
+		$this->getConsole()->write('Snychronize remote locales: ');
+
 		// collect keys given
 		$localesLocal = $this->getTranslationLocales();
 
-		$this->log('Fetching locales from PhraseApp');
 		// fetching the list of current translation keys in PhraseApp
 		$localesRemote = $this->getPhraseAppLocales()->fetch();
 
@@ -431,23 +442,31 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 
 		// create locales remote
 		$count = count($localesToCreateRemote);
-		$this->log('Found ' . $count . ' locales to create remote');
+		$this->getConsole()->write(number_format($count, 0, ',', '.') . 'x ', ColorInterface::GREEN);
 		if ($count != 0)
 		{
+			$progressBar = $this->getProgressBar($count);
 			foreach ($localesToCreateRemote as $localeToCreateRemote)
 			{
 				if ($this->getPhraseAppLocales()->create($localeToCreateRemote, $localeSource) === false)
 				{
 					throw new FailureAddLocale($localeToCreateRemote);
 				}
+
+				$progressBar->next();
 			}
+			$progressBar->finish();
 		}
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
+
 
 		// create locales locale
 		$count = count($localesToCreateLocale);
-		$this->log('Found ' . $count . ' locales to create local');
+		$this->getConsole()->write('Snychronize local locales: ');
+		$this->getConsole()->write(number_format($count, 0, ',', '.') . 'x ', ColorInterface::GREEN);
 		if ($count != 0)
 		{
+			$progressBar = $this->getProgressBar($count);
 			// empty translations array
 			$newTranslations = array_map(function ()
 			{
@@ -457,8 +476,12 @@ class Synchronize implements LoggerAwareInterface, ConfigAwareInterface, KeysAwa
 			foreach ($localesToCreateLocale as $localeToCreateLocale)
 			{
 				$this->translations[$localeToCreateLocale] = $newTranslations;
+				$progressBar->next();
 			}
+			$progressBar->finish();
 		}
+
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
 		return $this;
 	}

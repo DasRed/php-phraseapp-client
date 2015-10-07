@@ -4,6 +4,7 @@ namespace DasRed\PhraseApp\Synchronize;
 use DasRed\PhraseApp\Synchronize;
 use DasRed\PhraseApp\Synchronize\Files\HandlerInterface;
 use DasRed\PhraseApp\Synchronize\Exception\FailureAddKey;
+use Zend\Console\ColorInterface;
 
 class Files extends Synchronize
 {
@@ -32,13 +33,15 @@ class Files extends Synchronize
 	 */
 	protected function read()
 	{
-		$this->log('Loading translations');
+		$this->getConsole()->write('Loading: ');
 
 		/* @var $handler HandlerInterface */
 		foreach ($this->handlers as $handler)
 		{
 			$handler->read($this);
 		}
+
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
 		return $this;
 	}
@@ -93,13 +96,15 @@ class Files extends Synchronize
 	 */
 	protected function write()
 	{
-		$this->log('Saving translations');
+		$this->getConsole()->write('Saving: ');
 
 		/* @var $handler HandlerInterface */
 		foreach ($this->handlers as $handler)
 		{
 			$handler->write($this);
 		}
+
+		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
 		return $this;
 	}

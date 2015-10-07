@@ -3,11 +3,12 @@ namespace DasRedTest\PhraseApp\Synchronize;
 
 use DasRed\PhraseApp\Synchronize\Files;
 use DasRed\PhraseApp\Synchronize\Files\HandlerInterface;
-use Zend\Log\Logger;
 use DasRed\PhraseApp\Request\Keys;
 use DasRed\PhraseApp\Config;
 use DasRed\PhraseApp\Synchronize\Exception\FailureAddKey;
 use DasRed\PhraseApp\Synchronize\Exception\FailureDeleteKey;
+use Zend\Console\Adapter\AdapterInterface;
+use Zend\ProgressBar\ProgressBar;
 
 /**
  * @coversDefaultClass \DasRed\PhraseApp\Synchronize\Files
@@ -16,7 +17,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 {
 	protected $config;
 
-	protected $logger;
+	protected $console;
 
 	public function setUp()
 	{
@@ -25,7 +26,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$this->config = new Config('pp', 'b', 'de');
 		$this->config->setApplicationName('appName')->setBaseUrl('a');
 
-		$this->logger = $this->getMockBuilder(Logger::class)->disableOriginalConstructor()->getMock();
+		$this->console = $this->getMockBuilder(AdapterInterface::class)->disableOriginalConstructor()->getMock();
+		$this->progressBar = $this->getMockBuilder(ProgressBar::class)->disableOriginalConstructor()->getMock();
 	}
 
 	public function tearDown()
@@ -33,7 +35,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		parent::tearDown();
 
 		$this->config = null;
-		$this->logger = null;
+		$this->console = null;
 	}
 
 	/**
@@ -44,7 +46,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$handlerA = $this->getMockBuilder(HandlerInterface::class)->getMockForAbstractClass();
 		$handlerB = $this->getMockBuilder(HandlerInterface::class)->getMockForAbstractClass();
 
-		$files = new Files($this->logger, $this->config);
+		$files = new Files($this->console, $this->config);
 
 		$reflectionProperty = new \ReflectionProperty($files, 'handlers');
 		$reflectionProperty->setAccessible(true);
@@ -74,7 +76,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	{
 		$callOrder = [];
 
-		$files = new Files($this->logger, $this->config);
+		$files = new Files($this->console, $this->config);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['read']);
 		$handlerA = $builder->getMockForAbstractClass();
@@ -113,7 +115,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSynchronizeSuccess()
 	{
-		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$files = $this->getMockBuilder(Files::class)->setMethods(['read', 'write', 'synchronizeLocales', 'synchronizeKeys', 'synchronizeContent', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$files->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$files->expects($this->once())->method('read')->with()->willReturnSelf();
 		$files->expects($this->once())->method('write')->with()->willReturnSelf();
 		$files->expects($this->any())->method('synchronizeLocales')->willReturnSelf();
@@ -137,7 +140,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 			$this->identicalTo('ABb')
 		)->willReturn(true);
 
-		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseAppKeys'])->disableOriginalConstructor()->getMock();
+		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseAppKeys', 'getProgressBar'])->disableOriginalConstructor()->getMock();
+		$files->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$files->expects($this->once())->method('getPhraseAppKeys')->with()->willReturn($translationKeys);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey']);
@@ -186,7 +190,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 			$this->identicalTo('ABb')
 		)->willReturn(false);
 
-		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseAppKeys'])->disableOriginalConstructor()->getMock();
+		$files = $this->getMockBuilder(Files::class)->setMethods(['getPhraseAppKeys', 'getProgressBar'])->disableOriginalConstructor()->getMock();
+		$files->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$files->expects($this->once())->method('getPhraseAppKeys')->with()->willReturn($translationKeys);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['getDescriptionForKey']);
@@ -228,7 +233,7 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 	{
 		$callOrder = [];
 
-		$files = new Files($this->logger, $this->config);
+		$files = new Files($this->console, $this->config);
 
 		$builder = $this->getMockBuilder(HandlerInterface::class)->setMethods(['write']);
 		$handlerA = $builder->getMockForAbstractClass();
@@ -275,7 +280,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$phraseKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
 		$phraseKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
 
-		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
 		$sync->expects($this->exactly(5))->method('getPhraseAppKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->exactly(2))->method('removeTranslationKeyFromAllLocales')->withConsecutive(['nuff'], ['narf'])->willReturnSelf();
@@ -299,7 +305,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$phraseKeys->expects($this->never())->method('create');
 		$phraseKeys->expects($this->exactly(2))->method('delete')->withConsecutive(['nuff'], ['narf'])->willReturn(true);
 
-		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
 		$sync->expects($this->exactly(3))->method('getPhraseAppKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->exactly(2))->method('removeTranslationKeyFromAllLocales')->withConsecutive(['nuff'], ['narf'])->willReturnSelf();
@@ -323,7 +330,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$phraseKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
 		$phraseKeys->expects($this->never())->method('delete');
 
-		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
 		$sync->expects($this->exactly(3))->method('getPhraseAppKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
@@ -347,7 +355,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$phraseKeys->expects($this->never())->method('create');
 		$phraseKeys->expects($this->never())->method('delete');
 
-		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
 		$sync->expects($this->once())->method('getPhraseAppKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
@@ -371,7 +380,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$phraseKeys->expects($this->once())->method('create')->with('en')->willReturn(false);
 		$phraseKeys->expects($this->never())->method('delete');
 
-		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
 		$sync->expects($this->exactly(2))->method('getPhraseAppKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');
@@ -396,7 +406,8 @@ class FilesTest extends \PHPUnit_Framework_TestCase
 		$phraseKeys->expects($this->exactly(2))->method('create')->withConsecutive(['en'], ['fr'])->willReturn(true);
 		$phraseKeys->expects($this->once())->method('delete')->with('nuff')->willReturn(false);
 
-		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales'])->setConstructorArgs([$this->logger, $this->config])->getMock();
+		$sync = $this->getMockBuilder(Files::class)->setMethods(['getTranslations', 'getPhraseAppKeys', 'removeTranslationKeyFromAllLocales', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslations')->with()->willReturn($keysLocal);
 		$sync->expects($this->exactly(4))->method('getPhraseAppKeys')->with()->willReturn($phraseKeys);
 		$sync->expects($this->never())->method('removeTranslationKeyFromAllLocales');

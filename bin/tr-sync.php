@@ -1,9 +1,7 @@
 <?php
 use Zend\Console\Console;
 use Zend\Console\ColorInterface;
-use DasRed\Zend\Log\Logger\Console as Logger;
 use DasRed\Zend\Console\Getopt;
-use DasRed\Zend\Log\Writer\Console as ConsoleWriter;
 use DasRed\PhraseApp\Synchronize\Files;
 use DasRed\PhraseApp\Synchronize\Files\Type\Php;
 use DasRed\PhraseApp\Version;
@@ -99,9 +97,6 @@ if ($opt->version)
 // run
 try
 {
-	// create logger
-	$logger = (new Logger())->addWriter(new ConsoleWriter(Console::getInstance(), $opt->quiet ? ConsoleWriter::QUIET : ConsoleWriter::DEBUG));
-
 	// create handler
 	$exclude = [];
 	if ($opt->exclude)
@@ -113,22 +108,22 @@ try
 	$handler = new Php($opt->getRemainingArgs()[0], $exclude);
 
 	// create syncer
-	$files = new Files($logger, $config);
+	$files = new Files($console, $config);
 
 	// config syncer
 	$files->appendHandler($handler);
 
 	if ($files->synchronize() === false)
 	{
-		$logger->always(PHP_EOL . PHP_EOL)->always($console->colorize('Synchronize failed without an specific reason', ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED));
+		$console->writeLine('Synchronize failed without an specific reason', ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED);
 		exit(1);
 	}
 }
 catch (\Exception $exception)
 {
-	$logger->always(PHP_EOL . PHP_EOL)->always($console->colorize($exception->getMessage(), ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED))
-		->always(PHP_EOL)
-		->always($console->colorize($exception->getTraceAsString(), ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED));
+	$console->writeLine($exception->getMessage(), ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED);
+	$console->writeLine();
+	$console->writeLine($exception->getTraceAsString(), ColorInterface::LIGHT_YELLOW, ColorInterface::LIGHT_RED);
 	exit(1);
 }
 

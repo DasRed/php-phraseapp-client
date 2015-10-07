@@ -8,6 +8,7 @@
 	"require": {
 		"php": ">=5.5",
 		"zendframework/zend-http": "@stable",
+		"zendframework/zend-progressbar": "~2.5",
 		"dasred/zend-console": "@stable",
 		"dasred/zend-log": "@stable",
 		"dasred/translation":  "@stable",
