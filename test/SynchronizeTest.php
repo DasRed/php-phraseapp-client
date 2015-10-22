@@ -342,6 +342,46 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @covers ::synchronizeContent
 	 */
+	public function testSynchronizeContentSuccessPrefereRemoteWithEmptyNotDefault()
+	{
+		$remote = [
+			'fr' => ['a' => '', 'b' => ''],
+			'de' => ['a' => 'de.remote.1', 'b' => 'de.remote.2', 'de' => 'de.remote.4']
+		];
+		$local = [
+			'fr' => [],
+			'de' => ['a' => 'de.locale.1', 'b' => 'de.locale.2', 'de' => 'de.locale.4', 'nuff' => 'de.locale.nuff']
+		];
+
+		$phraseTranslations = $this->getMockBuilder(Translations::class)->setMethods(['fetch', 'store'])->disableOriginalConstructor()->getMock();
+		$phraseTranslations->expects($this->once())->method('fetch')->with()->willReturn($remote);
+		$phraseTranslations->expects($this->once())->method('store')->with('de', 'nuff', 'de.locale.nuff')->willReturn(true);
+
+		$sync = $this->getMockBuilder(Synchronize::class)->setMethods(['getPhraseAppTranslations', 'getPhraseAppKeys', 'getProgressBar'])->setConstructorArgs([$this->console, $this->config])->getMock();
+		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
+		$sync->expects($this->exactly(2))->method('getPhraseAppTranslations')->with()->willReturn($phraseTranslations);
+		$sync->expects($this->never())->method('getPhraseAppKeys');
+
+		foreach ($local as $locale => $keys)
+		{
+			$sync->addTranslations($locale, $keys);
+		}
+
+		$this->config->setPreferDirection(Config::PREFER_REMOTE);
+
+		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeContent');
+		$reflectionMethod->setAccessible(true);
+
+		$this->assertSame($sync, $reflectionMethod->invoke($sync));
+
+		$this->assertEquals([
+			'de' => ['a' => 'de.remote.1', 'b' => 'de.remote.2', 'de' => 'de.remote.4', 'nuff' => 'de.locale.nuff'],
+		], $sync->getTranslations());
+	}
+
+	/**
+	 * @covers ::synchronizeContent
+	 */
 	public function testSynchronizeContentSuccessPrefereLocal()
 	{
 		$remote = [
@@ -639,7 +679,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
 		$sync->expects($this->exactly(3))->method('getPhraseAppLocales')->with()->willReturn($phraseLocales);
-		$sync->expects($this->once())->method('getTranslations')->with('de')->willReturn($translations);
+		$sync->expects($this->never())->method('getTranslations');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeLocales');
 		$reflectionMethod->setAccessible(true);
@@ -649,8 +689,8 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertSame($sync, $reflectionMethod->invoke($sync));
 		$this->assertEquals([
-			'fr' => ['a' => '', 'b' => '', 'de' => ''],
-			'us' => ['a' => '', 'b' => '', 'de' => ''],
+			'fr' => [],
+			'us' => [],
 		], $reflectionProperty->getValue($sync));
 	}
 
@@ -705,7 +745,7 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 		$sync->expects($this->any())->method('getProgressBar')->with()->willReturn($this->progressBar);
 		$sync->expects($this->once())->method('getTranslationLocales')->with()->willReturn($localesLocale);
 		$sync->expects($this->exactly(3))->method('getPhraseAppLocales')->with()->willReturn($phraseLocales);
-		$sync->expects($this->once())->method('getTranslations')->with('de')->willReturn($translations);
+		$sync->expects($this->never())->method('getTranslations');
 
 		$reflectionMethod = new \ReflectionMethod($sync, 'synchronizeLocales');
 		$reflectionMethod->setAccessible(true);
@@ -715,8 +755,8 @@ class SynchronizeTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertSame($sync, $reflectionMethod->invoke($sync));
 		$this->assertEquals([
-			'fr' => ['a' => '', 'b' => '', 'de' => ''],
-			'us' => ['a' => '', 'b' => '', 'de' => ''],
+			'fr' => [],
+			'us' => [],
 		], $reflectionProperty->getValue($sync));
 	}
 

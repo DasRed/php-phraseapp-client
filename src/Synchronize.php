@@ -277,9 +277,9 @@ class Synchronize implements ConsoleAwareInterface, ConfigAwareInterface, KeysAw
 			if ($this->getConfig()->getPreferDirection() === Config::PREFER_REMOTE)
 			{
 				// overwrite all from remote and send only new content from local to remote
-				$countDifferencesLocal += count(array_diff($contentRemote, $contentLocale));
-				$this->translations[$locale] = array_merge($contentLocale, $contentRemote);
 				$keysLocalToStore = array_diff(array_keys($contentLocale), array_keys($contentRemote));
+				$countDifferencesLocal += count($keysLocalToStore);
+				$this->translations[$locale] = array_merge($contentLocale, $contentRemote);
 			}
 			// prefer local content... no changes on local content!
 			elseif ($this->getConfig()->getPreferDirection() === Config::PREFER_LOCAL)
@@ -459,7 +459,6 @@ class Synchronize implements ConsoleAwareInterface, ConfigAwareInterface, KeysAw
 		}
 		$this->getConsole()->writeLine('Done', ColorInterface::LIGHT_GREEN);
 
-
 		// create locales locale
 		$count = count($localesToCreateLocale);
 		$this->getConsole()->write('Snychronize local locales: ');
@@ -468,14 +467,9 @@ class Synchronize implements ConsoleAwareInterface, ConfigAwareInterface, KeysAw
 		{
 			$progressBar = $this->getProgressBar($count);
 			// empty translations array
-			$newTranslations = array_map(function ()
-			{
-				return '';
-			}, $this->getTranslations($this->getConfig()->getLocaleDefault()));
-
 			foreach ($localesToCreateLocale as $localeToCreateLocale)
 			{
-				$this->translations[$localeToCreateLocale] = $newTranslations;
+				$this->translations[$localeToCreateLocale] = [];
 				$progressBar->next();
 			}
 			$progressBar->finish();

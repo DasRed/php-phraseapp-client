@@ -146,6 +146,7 @@ class Request implements ConfigAwareInterface
 			->setMethod($method)
 			->getRequest()
 			->getHeaders()
+			->addHeaderLine('Accept-Encoding', 'deflate, sdch')
 			->addHeaderLine('Content-Type', 'application/json')
 			->addHeaderLine('User-Agent', $this->getConfig()->getApplicationName())
 			->addHeaderLine('Authorization', 'token ' . $this->getConfig()->getAccessToken());
