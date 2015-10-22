@@ -214,7 +214,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestFailedByException()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -256,7 +257,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestFailedByStatusCode()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -298,7 +300,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestFailedByJson()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -340,7 +343,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestFailedByGetBodyOfResponse()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -382,7 +386,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestFailedByGetBodyRuntimeExceptionWhichIsNotChunked()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -424,7 +429,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestSuccessDespiteGetBodyExceptionIsNotChunked()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -465,7 +471,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestSuccessMethodGET()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -510,7 +517,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		]);
 
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(5))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()],
@@ -554,7 +562,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		]);
 
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(5))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()],
@@ -598,7 +607,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		]);
 
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(5))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()],
@@ -642,7 +652,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 		]);
 
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(5))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()],
@@ -682,7 +693,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestSuccessMethodHEAD()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -723,7 +735,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestSuccessWithoutParameters()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
@@ -762,7 +775,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 	public function testRequestSuccessWithProjectId()
 	{
 		$headers = $this->getMockBuilder(\Zend\Http\Headers::class)->setMethods(['addHeaderLine'])->disableOriginalConstructor()->getMock();
-		$headers->expects($this->exactly(3))->method('addHeaderLine')->withConsecutive(
+		$headers->expects($this->exactly(4))->method('addHeaderLine')->withConsecutive(
+			['Accept-Encoding', 'deflate, sdch'],
 			['Content-Type', 'application/json'],
 			['User-Agent', $this->config->getApplicationName()],
 			['Authorization', 'token ' . $this->config->getAccessToken()]
